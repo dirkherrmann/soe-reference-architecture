@@ -1,0 +1,17 @@
+# CONFIG
+
+# Satellite 6 server and admin credentials
+export SATELLITE_SERVER=""
+export SATELLITE_USER=""
+export SATELLITE_PASSWORD=""
+
+# org name
+export ORG="ACME"
+
+# path to subscription manifest
+export subscription_manifest_loc="/tmp/manifest.zip"
+
+# additional RH repos 2 sync
+# we've already defined a comprehensive set of RH repos we're syncing per default as defined inside the function
+# please define here only additional RH repositories you want to sync
+export additional_rh_repos_to_sync=""
