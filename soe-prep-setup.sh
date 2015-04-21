@@ -31,6 +31,7 @@ def pre_check (
 
 
 def create_hammer_config (
+	# this functions creates the yaml configuration file for hammer usage
 	echo "TODO"
 
 )
