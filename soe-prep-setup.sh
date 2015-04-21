@@ -4,9 +4,9 @@
 
 
 # check if exists and if yes source the config file 
-if -f ~/.soe-config;
+if  [[ -f '~/.soe-config' ]]
 then
-	source ~/.soe-config
+	source '~/.soe-config'
 else
 	echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
 	echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
@@ -32,14 +32,14 @@ def pre_check (
 
 def create_hammer_config (
 	# this functions creates the yaml configuration file for hammer usage
-mkdir  ~/.hammer  
-cat << EOF > ~/.hammer/cli_config.yml  
-	:foreman:  
-	:host: $SATELLITE_SERVER
-	:username: $SATELLITE_USER
-	:password: $SATELLITE_PASSWD  
-	:organization: $ORG
-EOF 
+#mkdir  ~/.hammer  
+#cat << EOF > ~/.hammer/cli_config.yml  
+#	:foreman:  
+#	:host: $SATELLITE_SERVER
+#	:username: $SATELLITE_USER
+#	:password: $SATELLITE_PASSWD  
+#	:organization: $ORG
+#EOF 
 
 )
 
