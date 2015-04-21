@@ -32,7 +32,14 @@ def pre_check (
 
 def create_hammer_config (
 	# this functions creates the yaml configuration file for hammer usage
-	echo "TODO"
+mkdir  ~/.hammer  
+cat << EOF > ~/.hammer/cli_config.yml  
+	:foreman:  
+	:host: $SATELLITE_SERVER
+	:username: $SATELLITE_USER
+	:password: $SATELLITE_PASSWD  
+	:organization: $ORG
+EOF 
 
 )
 

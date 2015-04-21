@@ -1,9 +1,9 @@
 # CONFIG
 
 # Satellite 6 server and admin credentials
-export SATELLITE_SERVER=""
-export SATELLITE_USER=""
-export SATELLITE_PASSWORD=""
+export SATELLITE_SERVER="satellite.example.com"
+export SATELLITE_USER="admin"
+export SATELLITE_PASSWORD="changeme"
 
 # org name
 export ORG="ACME"
