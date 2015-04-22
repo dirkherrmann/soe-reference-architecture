@@ -29,3 +29,7 @@ done
 # delete sync plan
 
 # delete products
+# TODO does not work, at least it has successfully deleted repositories but then ran into a candlepin issue: hammer product delete --name 'Bareos-Backup' --organization $ORG
+# Error message foreman task: http://pastebin.test.redhat.com/278203
+# After resuming the task it has completed successfully
+
