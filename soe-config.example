@@ -31,3 +31,16 @@ export OSE3_ENABLED=0
 
 # enable if we want to use puppetforge repository and need to sync it
 export PUPPETFORGE_ENABLED=0
+
+# the hostname of git server which holds custom puppet modules
+export GIT_HOST="acme-git.example.com"
+
+# the URL to toplevel git repository which contains custom puppet modules
+# TODO: we can also ask to provide just the url behind the hostname we've asked above
+export CUSTOM_PUPPET_REPO="http://acme-git.example.com/git/puppet-modules"
+
+# the hostname of the custom yum repo server (usually the buildhost)
+export BUILD_HOST="acme-buildhost.example.com"
+
+# the URL of custom yum repo
+CUSTOM_YUM_REPO="http://buildhost.example.com/repo"
