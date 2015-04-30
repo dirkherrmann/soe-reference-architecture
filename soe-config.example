@@ -6,7 +6,9 @@ export SATELLITE_USER="admin"
 export SATELLITE_PASSWORD="changeme"
 
 # org name
-export ORG="ACME"
+export ORG="SOE"
+export ORG_NAME="SOE Corporation"
+export ORG_DESCRIPTION="SOE Reference Architecture example org"
 
 # path to subscription manifest
 export subscription_manifest_loc="/tmp/manifest.zip"
