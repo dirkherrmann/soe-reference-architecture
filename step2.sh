@@ -6,16 +6,9 @@
 
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
+DIR="$PWD"
+source "${DIR}/common.sh"
 
-# check if exists and if yes source the config file 
-if -f ~/.soe-config;
-then
-	source ~/.soe-config
-else
-	echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
-	echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
-	exit 1
-fi
 
 ###################################################################################################
 #
@@ -65,10 +58,10 @@ hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily syn
 ###################################################################################################
 
 # RHEL7 repos
-hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'  
-hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'  
-hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
-hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'RHN Tools for Red Hat Enterprise Linux 7 Server (RPMs)'  
+hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'  
+hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'  
+hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
+hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'RHN Tools for Red Hat Enterprise Linux 7 Server (RPMs)'  
 
 # TODO do we need additional channels for Sat 6.1 (satellite-tools?)
 
@@ -76,18 +69,18 @@ hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise L
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 
-	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (Kickstart)'  
-	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (RPMs)'  
-	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)'  
-	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'RHN Tools for Red Hat Enterprise Linux 6 Server (RPMs)'  
+	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (Kickstart)'  
+	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (RPMs)'  
+	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)'  
+	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'RHN Tools for Red Hat Enterprise Linux 6 Server (RPMs)'  
   
 fi
 
 # sync all packages
-hammer product synchronize --organization $ORG --name  'Red Hat Enterprise Linux Server' --async
+hammer product synchronize --organization "$ORG" --name  'Red Hat Enterprise Linux Server' --async
 
 # set sync plan
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Enterprise Linux Server' 
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'Red Hat Enterprise Linux Server' 
 
 
 # TODO check if we sync already the repos for 3rd party software here (EPEL, Bareos, VMware Tools)
@@ -98,8 +91,8 @@ hammer product create --name='Bareos-Backup-RHEL7' --organization="$ORG"
 hammer repository create --name='Bareos-RHEL7-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL7' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_7/
 # TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
 hammer repository create --name='Bareos-RHEL6-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL6' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_6/
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL6"
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL7"
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  "Bareos-Backup-RHEL6"
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  "Bareos-Backup-RHEL7"
 hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL6" --async
 hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL7" --async
 
@@ -121,7 +114,7 @@ then
 	hammer repository create --name='EPEL6-x86_64' --organization="$ORG" --product='EPEL6' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/6/x86_64/
 	hammer repository synchronize --organization "$ORG" --product "EPEL6" --async
 	# add it to daily sync plan
-	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL6"
+	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  "EPEL6"
 fi
 
 # enable and sync OSE3 repositories
@@ -135,14 +128,14 @@ if [ "$PUPPETFORGE_ENABLED" -eq 1 ]
 then
 	# TODO check if we really need the entire repo or just selected modules from it
 	# puppet forge repo
-	hammer product create --name='Forge' --organization=$ORG
-	hammer repository create --name='Puppet Forge' --organization=$ORG --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
+	hammer product create --name='Forge' --organization="$ORG"
+	hammer repository create --name='Puppet Forge' --organization="$ORG" --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
 fi
 
 # ACME product and repositories
-hammer product create --name="$ORG" --organization=$ORG
-hammer repository create --name="$ORG RPM Repo" --organization=$ORG --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
+hammer product create --name="$ORG" --organization="$ORG"
+hammer repository create --name="$ORG RPM Repo" --organization="$ORG" --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
 # TODO this does not work as expected. uncomment after fixing 
-# hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name "$ORG"
+# hammer repository create --name="$ORG Puppet Repo" --organization="$ORG" --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name "$ORG"
 hammer repository synchronize --organization "$ORG" --product "$ORG" --async

@@ -6,17 +6,8 @@
 
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
-
-# check if exists and if yes source the config file 
-if -f ~/.soe-config;
-then
-	source ~/.soe-config
-else
-	echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
-	echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
-	exit 1
-fi
-
+DIR="$PWD"
+source "${DIR}/common.sh"
 
 
 # create the generic lifecycle env path
