@@ -5,9 +5,9 @@ export SATELLITE_SERVER="satellite.example.com"
 export SATELLITE_USER="admin"
 export SATELLITE_PASSWORD="changeme"
 
-# org name
+# org name, label, and description
 export ORG="SOE"
-export ORG_NAME="SOE Corporation"
+export ORG_LABEL="SOE Corporation"
 export ORG_DESCRIPTION="SOE Reference Architecture example org"
 
 # path to subscription manifest
