@@ -57,6 +57,9 @@ hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Ser
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'EPEL7-x86_64-2' --product 'EPEL7-2'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 # TODO puppet modules which are part of core build
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
+# TODO description only available in logfile: /var/log/foreman/production.log
+# 2015-05-04 20:06:23 [I]   Parameters: {"id"=>"8", "description"=>"added motd puppet module", "organization_id"=>"4", "api_version"=>"v2", "content_view"=>{"id"=>"8", "description"=>"added motd puppet module"}}
 
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" --async
 
