@@ -10,11 +10,12 @@ Pre-Requisites
 * local checkout of this repository: git clone https://github.com/dirkherrmann/soe-reference-architecture
 * change directory to git checkkout: cd ./soe-reference-architecture
  
+The reference architecture is divide into 10 steps. For each step there is a dedicated script called stepX.sh while X is the step number. The idea is that the reader of the reference architecture executes each script after reading the chapter.
 
-Basically the setup lifecycle could be divided into 3 steps where each of them has its own script:
+For other use cases we don't need to separate the execution into 2 steps. Basically the setup lifecycle could be divided into 3 steps where each of them has its own script:
 
-1. Prepare the Setup (long-running tasks): soe-prep-setup.sh
-2. Execute the Setup (the core of the setup): soe-setup.sh
+1. Prepare the Setup (long-running tasks): soe-prep-setup.sh (executes primarily step1.sh)
+2. Execute the Setup (the core of the setup): soe-setup.sh (executes step 2-10)
 3. Clean-Up the Setup (delete all items which have been setup): soe-cleanup
 
 Step 1: Prepare the Setup
