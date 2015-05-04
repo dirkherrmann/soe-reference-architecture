@@ -5,8 +5,10 @@ export SATELLITE_SERVER="satellite.example.com"
 export SATELLITE_USER="admin"
 export SATELLITE_PASSWORD="changeme"
 
-# org name
+# org name, label, and description
 export ORG="ACME"
+export ORG_LABEL="ACME Corporation"
+export ORG_DESCRIPTION="SOE Reference Architecture example org"
 
 # path to subscription manifest
 export subscription_manifest_loc="/tmp/manifest.zip"
@@ -44,3 +46,7 @@ export BUILD_HOST="acme-buildhost.example.com"
 
 # the URL of custom yum repo
 CUSTOM_YUM_REPO="http://buildhost.example.com/repo"
+
+# set to 1 to see the hammer commands as they are executed
+export ECHO_COMMANDS=1
+
