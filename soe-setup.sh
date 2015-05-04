@@ -18,26 +18,19 @@ else
 fi
 
 
+# after the long-duration tasks have been done using soe-prep-setup.sh we now can run all remaining steps
+DIR="$PWD"
 
+# successfully tested
+sh "${DIR}/step3.sh"
+sh "${DIR}/step4.sh"
 
-# assign GPG keys to according products
-# Note: we've synced the products already during running soe-prep-setup.sh and created GPG keys earlier. 
-# Here we are adding the keys to the products
-hammer product update --gpg-key 'GPG-Bareos-RHEL7' --name 'Bareos-Backup-RHEL7' --organization $ORG
-hammer product update --gpg-key 'GPG-Bareos-RHEL6' --name 'Bareos-Backup-RHEL6' --organization $ORG
+# TODO after testing it comment it out
 
-
-
-###################################################################################################
-#
-# CV wordpress (contains EPEL7 + Filter)
-# 
-###################################################################################################
-hammer content-view create --name "cv-app-wordpress" --description "Wordpress Content View" --organization "$ORG"
-# TODO add puppet repo and modules as well
-hammer content-view add-repository --organization "$ORG" --repository 'EPEL7-x86_64' --name "cv-app-wordpress" --product 'EPEL7'
-hammer content-view filter create --type rpm --name 'wordpress-packages-only' --description 'Only include the wordpress rpm package' --inclusion=true --organization "$ORG" --repositories 'EPEL7-x86_64' --content-view "cv-app-wordpress"
-hammer content-view filter rule create --name wordpress --organization "$ORG" --content-view "cv-app-wordpress" --content-view-filter 'wordpress-packages-only'
-hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" --async
-
+#sh "${DIR}/step5.sh"
+#sh "${DIR}/step6.sh"
+#sh "${DIR}/step7.sh"
+#sh "${DIR}/step8.sh"
+#sh "${DIR}/step9.sh"
+#sh "${DIR}/step10.sh"
 
