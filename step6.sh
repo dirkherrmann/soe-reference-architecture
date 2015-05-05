@@ -6,9 +6,9 @@
 
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
-if -f ~/.soe-config;
+if -f $HOME/.soe-config;
   then
-  source ~/.soe-config
+  source $HOME/.soe-config
 else
   echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
   echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
@@ -20,40 +20,6 @@ fi
 # Basic Provisioning Setup
 #
 ###################################################################################################
-
-DOMAIN="$(hostname -d)"
-
-ORG="ACME"
-
-#comma seperated list of locations
-LOCATIONS="munich"
-
-# architecture to use (space separated)
-ARCH="x86_64"  #by default we only use x86_64
-
-#subnet config
-SUBNET_MASK="255.255.240.0"
-SUBNET_NETWORK="10.32.96.0"
-SUBNET_GATEWAY="10.32.111.254"
-SUBNET_IPAM_START="10.32.99.210"
-SUBNET_IPAM_END="10.32.99.249"
-
-#compute ressource
-COMPUTE_NAME="${COMPUTE_PROVIDER}-${ORG}-${LOCATION}"
-COMPUTE_DESC="RHEV Virtualization Infrastructure located in ${LOCATION}"
-COMPUTE_USER='admin@internal'
-COMPUTE_PASS="redhat"
-COMPUTE_URL="https://rhev.coe.muc.redhat.com/api"
-COMPUTE_PROVIDER="Ovirt"
-
-#partition table for core build
-PTABLE_NAME = "ptable-${ORG}-os-rhel-server"
-
-#APPs
-RHEL6APP=""
-###### TODO use hash to create APP (role) and Profiles
-#declare -A RHEL7APP
-RHEL7APP="wordpress,ticketmonster,Infrastructure Services"
 
 # clone Kickstart and PXE Boot template (actually we have to dump and create)
 hammer template dump --name "Satellite Kickstart Default" > "/tmp/tmp.skd"
