@@ -2,6 +2,8 @@
 
 # this is step where we expect to have an already installed satellite 6 and create the configuration for all further steps, the main org and subscriptions
 
+# TODO short desc and outcome of this step
+
 DIR="$PWD"
 source "${DIR}/common.sh"
 
