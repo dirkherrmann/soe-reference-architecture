@@ -288,14 +288,15 @@ do
         if [[ ${arch} != i386 ]]; then
             for APP in ${RHEL7APP}
               do
-                hammer content-view create \\
-                                        --name "ccv-${APP}" \\
-                                        --composite \\
-                                        --description "${APP} Composite Content View" \\
-                                        --organization "${ORG}"
-                                        --repositories "cv-os-rhel-7Server,cv-app-${APP}"
+# moved to step5.sh
+#                hammer content-view create \\
+#                                        --name "ccv-${APP}" \\
+#                                        --composite \\
+#                                        --description "${APP} Composite Content View" \\
+#                                        --organization "${ORG}"
+#                                        --repositories "cv-os-rhel-7Server,cv-app-${APP}"
 
-                hammer content-view  publish --name "ccv-${APP}" --organization "$ORG" --async
+#                hammer content-view  publish --name "ccv-${APP}" --organization "$ORG" --async
 
                 hammer activation-key create \\
                                         --name act-${LC_ENV}-app-rhel-7Server-${arch} \\

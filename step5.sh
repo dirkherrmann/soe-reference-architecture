@@ -47,6 +47,41 @@ hammer content-view filter rule create --name docker --organization "$ORG" --con
 
 # add puppet modules from $ORG product repo to this CV
 hammer content-view puppet-module add --content-view cv-app-docker --name dockerhost --organization $ORG
-
+# publish it
 hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --async
+# promote it to stage dev
+hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV
+# NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
+# TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
+
+
+
+
+###################################################################################################
+#
+# CCV Core Build + docker-host 
+# 
+###################################################################################################
+
+
+
+
+
+###################################################################################################
+#
+# CCV Core Build + wordpress
+# 
+###################################################################################################
+
+#                hammer content-view create \\
+#                                        --name "ccv-${APP}" \\
+#                                        --composite \\
+#                                        --description "${APP} Composite Content View" \\
+#                                        --organization "${ORG}"
+#                                        --repositories "cv-os-rhel-7Server,cv-app-${APP}"
+
+#                hammer content-view  publish --name "ccv-${APP}" --organization "$ORG" --async
+
+
+
 
