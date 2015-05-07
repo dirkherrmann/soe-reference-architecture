@@ -4,15 +4,17 @@ soe-prep-setup.sh:5:# TODO make this script interactive to ask for each value an
 soe-setup.sh:28:# TODO after testing it comment it out
 step1.sh:5:# TODO short desc and outcome of this step
 step2.sh:7:# TODO short desc and outcome of this step
-step2.sh:43:# TODO create one and upload into github
-step2.sh:68:# TODO do we need additional channels for Sat 6.1 (satellite-tools?)
-step2.sh:88:# TODO check if we sync already the repos for 3rd party software here (EPEL, Bareos, VMware Tools)
-step2.sh:95:# TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
-step2.sh:109:# TODO additional repos 2 sync as defined in CONFIG section
-step2.sh:131:# TODO
-step2.sh:132:echo "TODO" 
-step2.sh:139:	# TODO check if we really need the entire repo or just selected modules from it
-step2.sh:148:# TODO this does not work as expected. uncomment after fixing 
+step2.sh:14:# TODO since in this step we rely on the RH subscription and we don't ship the manifest as part of these scripts
+step2.sh:46:# TODO create one and upload into github
+step2.sh:71:# TODO do we need additional channels for Sat 6.1 (satellite-tools?)
+step2.sh:91:# TODO check if we sync already the repos for 3rd party software here (EPEL, Bareos, VMware Tools)
+step2.sh:98:# TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
+step2.sh:112:# TODO additional repos 2 sync as defined in CONFIG section
+step2.sh:141:# TODO
+step2.sh:142:echo "TODO" 
+step2.sh:152:	# TODO check if we really need the entire repo or just selected modules from it
+step2.sh:165:# TODO this does not work as expected. uncomment after fixing 
+step2.sh:168:# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
 step3.sh:7:# TODO short desc and outcome of this step
 step4.sh:7:# TODO short desc and outcome of this step
 step4.sh:21:# TODO double-check if this is the right chapter for this task
@@ -20,9 +22,11 @@ step4.sh:31:# RHEL 6 Core Build Content View - TODO NOT TESTED YET!
 step4.sh:40:	# TODO has to be substituted by 6.1 sat-tools channel which is not there yet
 step4.sh:51:	# TODO puppet modules which are part of core build 
 step4.sh:64:# TODO has to be substituted by 6.1 sat-tools channel which is not there yet
-step4.sh:68:# TODO puppet modules which are part of core build
-step4.sh:70:# TODO description only available in logfile: /var/log/foreman/production.log
+step4.sh:74:# TODO add all puppet modules which are part of core build based on our naming convention
+step4.sh:76:# TODO description only available in logfile: /var/log/foreman/production.log
 step5.sh:7:# TODO short desc and outcome of this step
-step5.sh:23:# TODO add puppet repo and modules as well
-step5.sh:42:# TODO add puppet repo and modules as well
-step5.sh:46:# TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
+step5.sh:20:# TODO figure out how to deal with puppetforge. If enabled we create product and repo during step2.
+step5.sh:35:# TODO add puppet repo and modules as well
+step5.sh:54:# TODO add puppet repo and modules as well
+step5.sh:58:# TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
+step5.sh:67:# TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one

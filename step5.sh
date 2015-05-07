@@ -89,8 +89,8 @@ hammer content-view publish --name "ccv-infra-dockerhost" --organization "$ORG" 
 # CCV Core Build + wordpress
 # 
 ###################################################################################################
-hammer content-view create --name "ccv-acmeweb-generic" --composite --description "CCV for ACME Website components" --organization $ORG --repositories 'cv-os-rhel-7Server,cv-app-wordpress,cv-app-mariadb'
-hammer content-view publish --name "ccv-infra-dockerhost" --organization "$ORG" --async
+hammer content-view create --name "ccv-biz-acmeweb" --composite --description "CCV for ACME Website components" --organization $ORG --repositories 'cv-os-rhel-7Server,cv-app-wordpress,cv-app-mariadb'
+hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG" --async
 
 
 
