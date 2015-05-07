@@ -11,8 +11,20 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
+###################################################################################################
+#
+# CV mariadb (puppet only since mariadb is part of RHEL7 and we don't use RHEL6 as DB server)
+# 
+###################################################################################################
+hammer content-view create --name "cv-app-mariadb" --description "MariaDB Content View" --organization "$ORG"
+# TODO figure out how to deal with puppetforge. If enabled we create product and repo during step2.
+# but we don't want to sync the entire repo to local disk. We can not filter at the repo but only CV level.
+# I've tried using the repo discovery and URLs directly to the module. None works. 
+# As a temporary workaround we are downloading and pushing the modules directly until we made a decision.
 
-
+# download the example42/mariadb puppet module
+wget https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
+# hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
 
 ###################################################################################################
 #
@@ -54,7 +66,13 @@ hammer content-view version promote --content-view "cv-app-docker" --organizatio
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
 
-
+###################################################################################################
+###################################################################################################
+#												  #
+# COMPOSITE CONTENT VIEW CREATION								  #
+#												  #
+###################################################################################################
+###################################################################################################
 
 
 ###################################################################################################
@@ -62,9 +80,8 @@ hammer content-view version promote --content-view "cv-app-docker" --organizatio
 # CCV Core Build + docker-host 
 # 
 ###################################################################################################
-
-
-
+hammer content-view create --name "ccv-infra-dockerhost" --composite --description "CCV for DockerHost Role as part of Infra Services" --organization $ORG --repositories 'cv-os-rhel-7Server,cv-app-docker'
+hammer content-view publish --name "ccv-infra-dockerhost" --organization "$ORG" --async
 
 
 ###################################################################################################
@@ -72,15 +89,8 @@ hammer content-view version promote --content-view "cv-app-docker" --organizatio
 # CCV Core Build + wordpress
 # 
 ###################################################################################################
-
-#                hammer content-view create \\
-#                                        --name "ccv-${APP}" \\
-#                                        --composite \\
-#                                        --description "${APP} Composite Content View" \\
-#                                        --organization "${ORG}"
-#                                        --repositories "cv-os-rhel-7Server,cv-app-${APP}"
-
-#                hammer content-view  publish --name "ccv-${APP}" --organization "$ORG" --async
+hammer content-view create --name "ccv-acmeweb-generic" --composite --description "CCV for ACME Website components" --organization $ORG --repositories 'cv-os-rhel-7Server,cv-app-wordpress,cv-app-mariadb'
+hammer content-view publish --name "ccv-infra-dockerhost" --organization "$ORG" --async
 
 
 

@@ -11,6 +11,9 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
+# TODO since in this step we rely on the RH subscription and we don't ship the manifest as part of these scripts
+# we should check here if at least the minimum number of subs we need is there.
+# hammer --csv subscription list --organization $ORG --per-page 999
 
 ###################################################################################################
 #
@@ -108,8 +111,11 @@ hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHE
 
 # TODO additional repos 2 sync as defined in CONFIG section
 
-
-# EPEL product including RHEL7 and RHEL6 (optional) repositories <- NOT POSSIBLE DUE TO 2 DIFFERENT GPG KEYS!
+###################################################################################################
+#
+# EPEL 7 (we need to divide between EPEL 6 and 7 due to different gpg keys)
+#
+###################################################################################################
 hammer product create --name='EPEL7' --organization="$ORG"
 # it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
 # hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
@@ -117,7 +123,11 @@ hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7"
 hammer repository synchronize --organization "$ORG" --product "EPEL7" --async
 
+###################################################################################################
+#
 # EPEL Repo for RHEL6 repos only if EPEL6_ENABLED param is set to 1 in config file
+#
+###################################################################################################
 if [ "$EPEL6_ENABLED" -eq 1 ]
 then
 	hammer product create --name='EPEL6' --organization="$ORG"
@@ -132,20 +142,28 @@ fi
 echo "TODO" 
 
 
-
-# puppetforge repo
+###################################################################################################
+#
+# Puppetforge repo
+#
+###################################################################################################
 if [ "$PUPPETFORGE_ENABLED" -eq 1 ]
 then
 	# TODO check if we really need the entire repo or just selected modules from it
 	# puppet forge repo
-	hammer product create --name='Forge' --organization=$ORG
+	hammer product create --name='PuppetForge' --organization=$ORG
 	hammer repository create --name='Puppet Forge' --organization=$ORG --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
 fi
 
+###################################################################################################
+#
 # ACME product and repositories
+#
+###################################################################################################
 hammer product create --name="$ORG" --organization=$ORG
 hammer repository create --name="$ORG RPM Repo" --organization=$ORG --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
 # TODO this does not work as expected. uncomment after fixing 
 # hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name "$ORG"
-hammer repository synchronize --organization "$ORG" --product "$ORG" --async
+# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
+# hammer repository synchronize --organization "$ORG" --product "$ORG" --async
