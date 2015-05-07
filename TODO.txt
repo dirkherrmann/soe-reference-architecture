@@ -3,6 +3,7 @@ soe-cleanup.sh:32:# TODO does not work, at least it has successfully deleted rep
 soe-prep-setup.sh:5:# TODO make this script interactive to ask for each value and then automatically create the config file based on our template
 soe-setup.sh:28:# TODO after testing it comment it out
 step1.sh:5:# TODO short desc and outcome of this step
+step1.sh:16:# TODO check if the file exists
 step2.sh:7:# TODO short desc and outcome of this step
 step2.sh:14:# TODO since in this step we rely on the RH subscription and we don't ship the manifest as part of these scripts
 step2.sh:46:# TODO create one and upload into github
@@ -10,11 +11,11 @@ step2.sh:71:# TODO do we need additional channels for Sat 6.1 (satellite-tools?)
 step2.sh:91:# TODO check if we sync already the repos for 3rd party software here (EPEL, Bareos, VMware Tools)
 step2.sh:98:# TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
 step2.sh:112:# TODO additional repos 2 sync as defined in CONFIG section
-step2.sh:141:# TODO
-step2.sh:142:echo "TODO" 
-step2.sh:152:	# TODO check if we really need the entire repo or just selected modules from it
-step2.sh:165:# TODO this does not work as expected. uncomment after fixing 
-step2.sh:168:# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
+step2.sh:132:# TODO
+step2.sh:133:echo "TODO" 
+step2.sh:173:	# TODO check if we really need the entire repo or just selected modules from it
+step2.sh:186:# TODO this does not work as expected. uncomment after fixing 
+step2.sh:189:# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
 step3.sh:7:# TODO short desc and outcome of this step
 step4.sh:7:# TODO short desc and outcome of this step
 step4.sh:21:# TODO double-check if this is the right chapter for this task

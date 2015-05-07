@@ -13,6 +13,8 @@ source "${DIR}/common.sh"
 # create org
 hammer organization create --name "$ORG" --label "$ORG_LABEL" --description "$ORG_DESCRIPTION"
 
+# TODO check if the file exists
+
 # upload manifest
 hammer subscription upload --organization "$ORG" --file "$subscription_manifest_loc"
 

@@ -81,7 +81,7 @@ then
   
 fi
 
-# sync all packages
+# sync all RHEL7 packages
 hammer product synchronize --organization $ORG --name  'Red Hat Enterprise Linux Server' --async
 
 # set sync plan
@@ -113,18 +113,6 @@ hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHE
 
 ###################################################################################################
 #
-# EPEL 7 (we need to divide between EPEL 6 and 7 due to different gpg keys)
-#
-###################################################################################################
-hammer product create --name='EPEL7' --organization="$ORG"
-# it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
-# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
-hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/7/x86_64/
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7"
-hammer repository synchronize --organization "$ORG" --product "EPEL7" --async
-
-###################################################################################################
-#
 # EPEL Repo for RHEL6 repos only if EPEL6_ENABLED param is set to 1 in config file
 #
 ###################################################################################################
@@ -133,6 +121,9 @@ then
 	hammer product create --name='EPEL6' --organization="$ORG"
 	hammer repository create --name='EPEL6-x86_64' --organization="$ORG" --product='EPEL6' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/6/x86_64/
 	hammer repository synchronize --organization "$ORG" --product "EPEL6" --async
+
+	hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7' --organization $ORG
+
 	# add it to daily sync plan
 	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL6"
 fi
@@ -140,6 +131,36 @@ fi
 # enable and sync OSE3 repositories
 # TODO
 echo "TODO" 
+
+
+###################################################################################################
+#
+# EPEL 7 (we need to divide between EPEL 6 and 7 due to different gpg keys)
+#
+###################################################################################################
+hammer product create --name='EPEL7' --organization="$ORG"
+# it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
+# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
+hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/7/x86_64/
+hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7' --organization $ORG
+
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7"
+hammer repository synchronize --organization "$ORG" --product "EPEL7" --async
+
+
+###################################################################################################
+#
+# EPEL 7-2 (we need to clone the entire repo to apply different filters, see ref arch for details)
+#
+###################################################################################################
+hammer product create --name='EPEL7-2' --organization="$ORG"
+# it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
+# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7-2' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
+hammer repository create --name='EPEL7-x86_64-2' --organization="$ORG" --product='EPEL7-2' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/7/x86_64/
+hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7-2' --organization $ORG
+
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7-2"
+hammer repository synchronize --organization "$ORG" --product "EPEL7-2" --async
 
 
 ###################################################################################################
