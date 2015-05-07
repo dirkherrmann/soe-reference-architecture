@@ -333,8 +333,10 @@ do
 
           if [[ $KEY = "Infrastructure Services" ]]; then
             TYPE="infra"
+            KEY_LABEL="infra"
           else
             TYPE="biz"
+            KEY_LABEL="${KEY}"
           fi
 
           ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
@@ -357,7 +359,7 @@ do
           hammer host-collection create --name "${KEY}" --organization "${ORG}"
 
           hammer activation-key create \
-          --name "act-${LC_ENV}-app-${KEY}-${arch}" \
+          --name "act-${LC_ENV}-app-${KEY_LABEL}-${arch}" \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
 
@@ -381,10 +383,10 @@ do
             --organizations "${ORG}" \
             --locations "${LOCATIONS}"
 
-            hammer host-collection create --name "${KEY}-${value} --organization "${ORG}"
+            hammer host-collection create --name "${KEY}-${value}" --organization "${ORG}"
 
             hammer activation-key create \
-            --name "act-${LC_ENV}-app-${KEY}-${value}-${arch}" \
+            --name "act-${LC_ENV}-app-${KEY_LABEL}-${value}-${arch}" \
             --lifecycle-environment "${LC_ENV}" \
             --organization "${ORG}"
           done
