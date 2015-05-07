@@ -67,8 +67,8 @@ hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Ser
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 
 # we are creating an initial version just containing RHEL 7.0 bits based on a date filter between RHEL 7.0 GA and before RHEL 7.1 GA
-hammer content-view filter create --type erratum --name 'rhel-7.0-only' --description 'Only include RHEL 7.0 bits' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64' --content-view "cv-app-docker"
-hammer content-view filter rule create  --organization "$ORG" --content-view "cv-app-docker" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
+hammer content-view filter create --type erratum --name 'rhel-7.0-only' --description 'Only include RHEL 7.0 bits' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64' --content-view "cv-os-rhel-7Server"
+hammer content-view filter rule create  --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
 
 
 # TODO add all puppet modules which are part of core build based on our naming convention

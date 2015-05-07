@@ -23,8 +23,10 @@ hammer content-view create --name "cv-app-mariadb" --description "MariaDB Conten
 # As a temporary workaround we are downloading and pushing the modules directly until we made a decision.
 
 # download the example42/mariadb puppet module
-wget https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
-# hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
+wget -O /tmp/mariadb.tgz https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
+hammer repository upload-content --organization $ORG --product $ORG --name "git-puppet-infra-services" --path /tmp/mariadb.tgz
+hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
+hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" --async
 
 ###################################################################################################
 #
