@@ -42,6 +42,7 @@ export GIT_HOST="acme-git.example.com"
 
 # the URL to toplevel git repository which contains custom puppet modules
 # TODO: we can also ask to provide just the url behind the hostname we've asked above
+# TODO: check if we still need it since we do it now directly on Satellite itself
 export CUSTOM_PUPPET_REPO="http://acme-git.example.com/git/puppet-modules"
 
 # the hostname of the custom yum repo server (usually the buildhost)

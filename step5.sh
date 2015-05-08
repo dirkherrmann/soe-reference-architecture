@@ -24,7 +24,7 @@ hammer content-view create --name "cv-app-mariadb" --description "MariaDB Conten
 
 # download the example42/mariadb puppet module
 wget -O /tmp/mariadb.tgz https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
-hammer repository upload-content --organization $ORG --product $ORG --name "git-puppet-infra-services" --path /tmp/mariadb.tgz
+hammer repository upload-content --organization $ORG --product $ORG --name "$ORG Puppet Repo" --path /tmp/mariadb.tgz
 hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
 hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" --async
 
@@ -60,7 +60,7 @@ hammer content-view filter rule create --name docker --organization "$ORG" --con
 # TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
 
 # add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-app-docker --name dockerhost --organization $ORG
+hammer content-view puppet-module add --content-view cv-app-docker --name profile_dockerhost --organization $ORG
 # publish it
 hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --async
 # promote it to stage dev
@@ -93,7 +93,7 @@ hammer content-view publish --name "ccv-infra-dockerhost" --organization "$ORG" 
 
 ###################################################################################################
 #
-# CCV Core Build + wordpress
+# CCV Core Build + wordpress + mariadb
 # 
 ###################################################################################################
 hammer content-view create --name "ccv-biz-acmeweb" --composite --description "CCV for ACME Website components" --organization $ORG --repositories 'cv-os-rhel-7Server,cv-app-wordpress,cv-app-mariadb'

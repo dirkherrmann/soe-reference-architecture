@@ -185,7 +185,7 @@ fi
 hammer product create --name="$ORG" --organization=$ORG
 hammer repository create --name="$ORG RPM Repo" --organization=$ORG --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
 # TODO this does not work as expected. uncomment after fixing 
-# hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
+hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name "$ORG"
 # TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
 # hammer repository synchronize --organization "$ORG" --product "$ORG" --async
