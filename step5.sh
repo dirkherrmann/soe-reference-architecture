@@ -66,7 +66,10 @@ hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --asyn
 # promote it to stage dev
 # TODO issue here, thanks mmccune to point me there: https://bugzilla.redhat.com/show_bug.cgi?id=1219585
 # we need to specify the version ID if there is more than version one
-hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV
+# workaround provided by mmccune:
+VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
+# echo "Promoting CV VersionID: $VID"
+hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
 
