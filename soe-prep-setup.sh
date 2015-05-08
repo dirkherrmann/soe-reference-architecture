@@ -8,6 +8,16 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
+# check if exists and if yes source the config file 
+if  $(test -f '~/.soe-config' )
+then
+	source '~/.soe-config'
+else
+	echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
+	echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
+	exit 1
+fi
+
 
 # basically all long-duration tasks are now executed during step 1 and step 2
 DIR="$PWD"

@@ -4,8 +4,6 @@
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 # 
 
-# TODO short desc and outcome of this step
-
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
 DIR="$PWD"

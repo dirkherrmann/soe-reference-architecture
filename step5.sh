@@ -4,29 +4,13 @@
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 # 
 
-# TODO short desc and outcome of this step
-
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
 DIR="$PWD"
 source "${DIR}/common.sh"
 
-###################################################################################################
-#
-# CV mariadb (puppet only since mariadb is part of RHEL7 and we don't use RHEL6 as DB server)
-# 
-###################################################################################################
-hammer content-view create --name "cv-app-mariadb" --description "MariaDB Content View" --organization "$ORG"
-# TODO figure out how to deal with puppetforge. If enabled we create product and repo during step2.
-# but we don't want to sync the entire repo to local disk. We can not filter at the repo but only CV level.
-# I've tried using the repo discovery and URLs directly to the module. None works. 
-# As a temporary workaround we are downloading and pushing the modules directly until we made a decision.
 
-# download the example42/mariadb puppet module
-wget -O /tmp/mariadb.tgz https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
-hammer repository upload-content --organization $ORG --product $ORG --name "git-puppet-infra-services" --path /tmp/mariadb.tgz
-hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
-hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" --async
+
 
 ###################################################################################################
 #
@@ -44,6 +28,7 @@ hammer content-view filter rule create --name wordpress --organization "$ORG" --
 # hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name <module_name> --organization $ORG
 
 hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" --async
+<<<<<<< HEAD
 
 
 
@@ -102,3 +87,5 @@ hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG" --asy
 
 
 
+=======
+>>>>>>> 818177634ecefdf4db658c771543086c2e287836

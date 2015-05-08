@@ -6,7 +6,7 @@
 
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
-if -f $HOME/.soe-config;
+if test -f $HOME/.soe-config;
   then
   source $HOME/.soe-config
 else
@@ -32,9 +32,9 @@ hammer template dump --name "Boot disk iPXE - host" > "/tmp/tmp.bdp"
 hammer template create --file /tmp/tmp.bdp --name "${ORG} Boot disk iPXE - host" --organizations "${ORG}" --type Bootdisk
 
 # add operating system no matter if rhel5,6 or 7,.. to the SOE kickstart template since we follow the principal of having a single kickstart template for all OS releases
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default PXELinux" --operatingsystem "${RHEL_Release}"; done
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default" --operatingsystem "${RHEL_Release}"; done
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Boot disk iPXE - host" --operatingsystem "${RHEL_Release}"; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default PXELinux" --operatingsystem ""${RHEL_Release}""; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default" --operatingsystem ""${RHEL_Release}""; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Boot disk iPXE - host" --operatingsystem ""${RHEL_Release}""; done
 
 # create custom ptable file to import via hammer
 cat > /tmp/tmp.${ORG}.ptable <<- EOF
@@ -69,12 +69,12 @@ hammer partition-table create --name ${PTABLE_NAME} --os-family "Redhat" --file 
 # first we change the root passwort hash from md5 to sha512 (more secure)
 hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release
 do
-  hammer os update --title ${RHEL_Release} --password-hash SHA512
-  hammer os add-architecture --title ${RHEL_Release} --architecture x86_64
-  hammer os add-ptable --title ${RHEL_Release} --partition-table "${PTABLE_NAME}"
-  hammer os add-config-template --title ${RHEL_Release} --config-template "${ORG} Kickstart default PXELinux"
-  hammer os add-config-template --title ${RHEL_Release} --config-template "${ORG} Kickstart default"
-  hammer os add-config-template --title ${RHEL_Release} --config-template "${ORG} Boot disk iPXE - host"
+  hammer os update --title "${RHEL_Release}" --password-hash SHA512
+  hammer os add-architecture --title "${RHEL_Release}" --architecture x86_64
+  hammer os add-ptable --title "${RHEL_Release}" --partition-table "${PTABLE_NAME}"
+  hammer os add-config-template --title "${RHEL_Release}" --config-template "${ORG} Kickstart default PXELinux"
+  hammer os add-config-template --title "${RHEL_Release}" --config-template "${ORG} Kickstart default"
+  hammer os add-config-template --title "${RHEL_Release}" --config-template "${ORG} Boot disk iPXE - host"
 done
 
 # add config template as default - currently only possible with id
@@ -92,38 +92,43 @@ done
 hammer proxy list | awk -F "|" '/DNS/ {print $2}' | sed s'/ //' | while read Proxy
 do
   if [[ -n $Proxy ]]; then
-    hammer domain update --name "${DOMAIN}" --dns ${Proxy}
+    hammer domain update --name "${DOMAIN}" --dns "${Proxy}"
   fi
 done
 hammer domain update --name "${DOMAIN}" --organizations "${ORG}"
 hammer domain update --name "${DOMAIN}" --locations "${LOCATION}"
 
+# create location
+for LOC in ${LOCATIONS}
+do
+  hammer location create --name "${LOC}"
+done
+
 # create subnet
 # we assume that TFTP, DHCP and DNS capability is being used from the satellite capsule server.
-hammer subnet create \\
-                    --name "${DOMAIN}" \\
-                    --organizations "${ORG}"
-                    --locations "${LOCATIONS}" \\
-                    --domains "${DOMAIN}"
-                    --boot-mode "static" \\
-                    --dns-primary "${DNS_PRIMARY}"
-                    --mask "${SUBNET_MASK}"
-                    --network "${SUBNET_NETWORK}"
-                    --gateway "${SUBNET_GATEWAY}"
-                    --from "${SUBNET_IPAM_START}"
-                    --to "${SUBNET_IPAM_END}"
+hammer subnet create --name "${DOMAIN}" \
+--organizations "${ORG}" \
+--locations "${LOCATIONS}" \
+--domains "${DOMAIN}" \
+--boot-mode "Static" \
+--dns-primary "${DNS_PRIMARY}" \
+--mask "${SUBNET_MASK}" \
+--network "${SUBNET_NETWORK}" \
+--gateway "${SUBNET_GATEWAY}" \
+--from "${SUBNET_IPAM_START}" \
+--to "${SUBNET_IPAM_END}"
 
 hammer proxy list | awk -F "|" '/DNS/ {print $1}' | while read DNSProxyID
 do
-  if [[ -n $DNSProxyID ]]; then
-    hammer subnet update --name "${DOMAIN}" --dns-id ${DNSProxyID}
+  if [[ -n "$DNSProxyID" ]]; then
+    hammer subnet update --name "${DOMAIN}" --dns-id "${DNSProxyID}"
   fi
 done
 
 hammer proxy list | awk -F "|" '/DHCP/ {print $1}' | while read DHCPProxyID
 do
-  if [[ -n $DHCPProxyID ]]; then
-    hammer subnet update --name "${DOMAIN}" --dhcp-id ${DHCPProxyID} --ipam "DHCP"
+  if [[ -n "$DHCPProxyID" ]]; then
+    hammer subnet update --name "${DOMAIN}" --dhcp-id "${DHCPProxyID}" --ipam "DHCP"
   else
     hammer subnet update --name "${DOMAIN}" --ipam "Internal DB"
   fi
@@ -161,166 +166,232 @@ done
 # activation keys are create during host group creation
 
 # create compute resource
-if [[ -n ${COMPUTE_PROVIDER} && ${COMPUTE_PROVIDER} = "Ovirt" ]]
+if [[ -n "${COMPUTE_PROVIDER}" && "${COMPUTE_PROVIDER}" = "Ovirt" ]]
   then
-  ${COMPUTE_PROVIDER} = "RHEV"
+  "${COMPUTE_PROVIDER}" = "RHEV"
 fi
 
-if [[ -n $COMPUTE_PROVIDER ]]
-  then
-    compute-resource create \\
-                      --name ${COMPUTE_NAME} \\
-                      --description ${COMPUTE_DESC} \\
-                      --user ${COMPUTE_USER} \\
-                      --password ${COMPUTE_PASS} \\
-                      --url ${COMPUTE_URL} \\
-                      --provider ${COMPUTE_PROVIDER} \\
-                      --organizations ${ORG} \\
-                      --locations ${LOCATIONS}
-                      # --uuid  #needed to provide the Datacenter to be used, but name is not sufficient for now
+if [[ -n "$COMPUTE_PROVIDER" ]] ;then
+  hammer compute-resource create \
+    --name "${COMPUTE_NAME}" \
+    --description "${COMPUTE_DESC}" \
+    --user "${COMPUTE_USER}" \
+    --password "${COMPUTE_PASS}" \
+    --url "${COMPUTE_URL}" \
+    --provider "${COMPUTE_PROVIDER}" \
+    --organizations "${ORG}" \
+    --locations "${LOCATIONS}"
+    # --uuid  #needed to provide the Datacenter to be used, but name is not sufficient for now
 fi
 
 # create host groups
-hammer lifecycle-environment list --organization ${ORG} | awk -F "|" '/[[:digit:]]/ ${print $2}' | sed s'/ //' | while read LC_ENV
+#create the second level of the host group (RHEL Core Build)
+PuppetProxy=$(hammer proxy list | awk -F "|" '/Puppe/ {print $2;exit}' | xargs)
+
+hammer lifecycle-environment list --organization "${ORG}" | awk -F "|" '/[[:digit:]]/ {print $2}' | sed s'/ //' | while read LC_ENV
 do
+
   #create the top level of the host group (lifecycle environment)
-  hammer hostgroup create --name $(echo ${LC_ENV}| tr '[[:lower:]' '[[:upper:]]')
+  hammer hostgroup create --name ${LC_ENV}
 
-  #create the second level of the host group (RHEL Core Build)
-  hammer proxy list | awk -F "|" '/Puppe/ {print $2}' | sed s'/ //' | while read Puppet
-  do
-    PuppetProxy=${Puppet}
-  done
-
-  hammer lifecycle-environment list --organization ${ORG} | awk -F "|" '/[[:digit:]]/ ${print $2}' | sed s'/ //' | while read LC_ENV
-  do
-    OS = $(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | sed s'/ //')
-    for arch in ${ARCH}
+    OS=$(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | xargs)
+    for arch in "${ARCH}"
     do
-      #there is no i386 for rhel7 so we have to skip creating anything for it
+#      #there is no i386 for rhel7 so we have to skip creating anything for it
       if [[ $arch != i386 ]]; then
-
+#
         #create activation key while we create the according hostgroup
-        hammer activation-key create \\
-                                --name act-${LC_ENV}-os-rhel-7Server-${arch} \\
-                                --content-view cv-os-rhel-7Server \\
-                                --lifecycle-environment ${LC_ENV} \\
-                                --organization ${ORG}
+        hammer activation-key create \
+          --organization "${ORG}" \
+          --content-view "cv-os-rhel-7Server" \
+          --name "act-\"${LC_ENV}\"-os-rhel-7Server-\"${arch}\"" \
+          --lifecycle-environment "${LC_ENV}"
 
-        hammer hostgroup create --name "RHEL-7Server-${arch}" \\
-                                --parent "$(echo ${LC_ENV}| tr '[[:lower:]' '[[:upper:]]')" \\
-                                --architecture "${arch}" \\
-                                --operatingsystem "${OS}" \\
-                                --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \\
-                                --partition-table "${PTABLE_NAME}" \\
-                                --subnet "${DOMAIN}" \\
-                                --domain "${DOMAIN}" \\
-                                --lifecycle-environment "${LC_ENV}" \\
-                                --content-view "cv-os-rhel-7Server" \\
-                                --puppet-proxy "${PuppetProxy}" \\
-                                --puppet-ca-proxy "${PuppetProxy}" \\
-                                --organizations "${ORG}" \\
-                                --locations "${LOCATIONS}"
-                                #--environment do we also have to add the puppet env?
+        hammer hostgroup create --name "RHEL-7Server-${arch}" \
+          --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
+          --parent "${LC_ENV}" \
+          --architecture "${arch}" \
+          --operatingsystem "${OS}" \
+          --partition-table "${PTABLE_NAME}" \
+          --subnet "${DOMAIN}" \
+          --domain "${DOMAIN}" \
+          --lifecycle-environment "${LC_ENV}" \
+          --organizations "${ORG}" \
+          --locations "${LOCATIONS}" \
+          --content-view "cv-os-rhel-7Server"
       fi
 
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
 
-        hammer activation-key create \\
-                                --name act-${LC_ENV}-os-rhel-6Server-${arch} \\
-                                --content-view cv-os-rhel-6Server \\
-                                --lifecycle-environment ${LC_ENV} \\
-                                --organization ${ORG}
+        hammer activation-key create \
+          --name "act-\"${LC_ENV}\"-os-rhel-6Server-\"${arch}\"" \
+          --content-view "cv-os-rhel-6Server" \
+          --lifecycle-environment "${LC_ENV}" \
+          --organization "${ORG}"
 
-        OS = $(hammer os list | awk -F '|' '/RedHat 6/ {print $2;exit}' | sed s'/ //')
-        hammer hostgroup create --name "RHEL-6Server-${arch}"
-                              --parent "$(echo ${LC_ENV}| tr '[[:lower:]' '[[:upper:]]')" \\
-                              --architecture "${arch}" \\
-                              --operatingsystem "${OS}" \\
-                              --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \\
-                              --partition-table "${PTABLE_NAME}" \\
-                              --subnet "${DOMAIN}" \\
-                              --domain "${DOMAIN}" \\
-                              --lifecycle-environment "${LC_ENV}" \\
-                              --content-view "cv-os-rhel-6Server" \\
-                              --puppet-proxy "${PuppetProxy}" \\
-                              --puppet-ca-proxy "${PuppetProxy}" \\
-                              --organizations "${ORG}" \\
-                              --locations "${LOCATIONS}"
-                              #--environment do we also have to add the puppet env?
+        OS=$(hammer os list | awk -F '|' '/RedHat 6/ {print $2;exit}' | xargs)
+
+        hammer hostgroup create --name "RHEL-6Server-${arch}" \
+          --parent "${LC_ENV}" \
+          --architecture "${arch}" \
+          --operatingsystem "${OS}" \
+          --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \
+          --partition-table "${PTABLE_NAME}" \
+          --subnet "${DOMAIN}" \
+          --domain "${DOMAIN}" \
+          --lifecycle-environment "${LC_ENV}" \
+          --content-view "cv-os-rhel-6Server" \
+          --puppet-proxy "${PuppetProxy}" \
+          --puppet-ca-proxy "${PuppetProxy}" \
+          --organizations "${ORG}" \
+          --locations "${LOCATIONS}"
       fi
 
     done
-  done
-
 done
 
 
 ########### DEPLOYMENT ###############
 
-# add host collections for the APPS we want to depoy
-
-if [[ -n $RHEL7APP ]]
-  then
-    for APP in $RHEL7APP
-      do
-        hammer host-collection create --name "${APP}" --organization "${ORG}"
-      done
-fi
-
-if [[ -n $RHEL6APP ]]
-  then
-    for APP in $RHEL6APP
-      do
-        hammer host-collection create --name "${APP}" --organization "${ORG}"
-      done
-fi
-
 # add hostgroups & activation keys for the APPS we want to deploy
 # Applications will only exist in non Library ENV
 
-hammer lifecycle-environment list --organization ${ORG} | awk -F "|" '/[[:digit:]]/ ${print $2}' | sed s'/ //' | while read LC_ENV
+hammer lifecycle-environment list --organization ${ORG} | awk -F "|" '/[[:digit:]]/ {print $2}' | sed s'/ //' | while read LC_ENV
 do
-  if [[ ${LC_ENV != Library ]]; then
+  if [[ ${LC_ENV} != Library ]]; then
     #RHEL7
+    OS=$(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | xargs)
     for arch in ${ARCH}
-      do
-        if [[ ${arch} != i386 ]]; then
-            for APP in ${RHEL7APP}
-              do
-# moved to step5.sh
-#                hammer content-view create \\
-#                                        --name "ccv-${APP}" \\
-#                                        --composite \\
-#                                        --description "${APP} Composite Content View" \\
-#                                        --organization "${ORG}"
-#                                        --repositories "cv-os-rhel-7Server,cv-app-${APP}"
+    do
+      if [[ ${arch} != i386 ]]; then
 
-#                hammer content-view  publish --name "ccv-${APP}" --organization "$ORG" --async
+        for KEY in "${!RHEL7APPS[@]}"
+        do
 
-                hammer activation-key create \\
-                                        --name act-${LC_ENV}-app-rhel-7Server-${arch} \\
-                                        --content-view ccv-${APP} \\
-                                        --lifecycle-environment ${LC_ENV} \\
-                                        --organization ${ORG}
+          if [[ $KEY = "Infrastructure Services" ]]; then
+            TYPE="infra"
+          else
+            TYPE="biz"
+          fi
 
-                hammer hostgroup create --name "${APP}"
-                                        --parent "RHEL-7Server-${arch}" \\
-                                        --architecture "${arch}" \\
-                                        --operatingsystem "${OS}" \\
-                                        --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \\
-                                        --partition-table "${PTABLE_NAME}" \\
-                                        --subnet "${DOMAIN}" \\
-                                        --domain "${DOMAIN}" \\
-                                        --lifecycle-environment "${LC_ENV}" \\
-                                        --content-view "ccv-${APP}" \\
-                                        --puppet-proxy "${PuppetProxy}" \\
-                                        --puppet-ca-proxy "${PuppetProxy}" \\
-                                        --organizations "${ORG}" \\
-                                        --locations "${LOCATIONS}"
-                                        #--environment do we also have to add the puppet env?
-            done
-        fi
-      done
+          ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
+
+          #create toplevel APP
+          hammer hostgroup create --name "${KEY}" \
+              --parent-id "${ParentID}"
+              --architecture "${arch}" \
+              --operatingsystem "${OS}" \
+              --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
+              --partition-table "${PTABLE_NAME}" \
+              --subnet "${DOMAIN}" \
+              --domain "${DOMAIN}" \
+              --lifecycle-environment "${LC_ENV}" \
+              --puppet-proxy "${PuppetProxy}" \
+              --puppet-ca-proxy "${PuppetProxy}" \
+              --organizations "${ORG}" \
+              --locations "${LOCATIONS}"
+
+          hammer host-collection create --name "${KEY}" --organization "${ORG}"
+
+          hammer activation-key create \
+              --name "act-${LC_ENV}-app-\"${KEY}\"-${arch}" \
+              --lifecycle-environment "${LC_ENV}" \
+              --organization "${ORG}"
+
+          #create app components
+          TMP_IFS=$IFS
+          IFS=","; for value in ${RHEL7APPS[$KEY]}
+          do
+            ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
+
+            hammer hostgroup create --name "${value}" \
+                --parent-id "${ParentID}" \
+                --architecture "${arch}" \
+                --operatingsystem "${OS}" \
+                --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
+                --partition-table "${PTABLE_NAME}" \
+                --subnet "${DOMAIN}" \
+                --domain "${DOMAIN}" \
+                --lifecycle-environment "${LC_ENV}" \
+                --puppet-proxy "${PuppetProxy}" \
+                --puppet-ca-proxy "${PuppetProxy}" \
+                --organizations "${ORG}" \
+                --locations "${LOCATIONS}"
+
+            hammer host-collection create --name "\"${KEY}\"-\"${value}\"" --organization "${ORG}"
+
+            hammer activation-key create \
+                --name "act-${LC_ENV}-app-\"${KEY}\"-\"${value}\"-${arch}" \
+                --lifecycle-environment "${LC_ENV}" \
+                --organization "${ORG}"
+          done
+          IFS=$TMP_IFS
+        done
+      fi
+        for KEY in "${!RHEL6APPS[@]}"
+        do
+
+          if [[ $KEY = "Infrastructure Services" ]]; then
+            TYPE="infra"
+            KEY_LABEL="infra"
+          else
+            TYPE="biz"
+            KEY_LABEL="${KEY}"
+          fi
+
+          ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
+
+          #create toplevel APP
+          hammer hostgroup create --name "${KEY}" \
+          --parent-id "${ParentID}"
+          --architecture "${arch}" \
+          --operatingsystem "${OS}" \
+          --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_7Server" \
+          --partition-table "${PTABLE_NAME}" \
+          --subnet "${DOMAIN}" \
+          --domain "${DOMAIN}" \
+          --lifecycle-environment "${LC_ENV}" \
+          --puppet-proxy "${PuppetProxy}" \
+          --puppet-ca-proxy "${PuppetProxy}" \
+          --organizations "${ORG}" \
+          --locations "${LOCATIONS}"
+
+          hammer host-collection create --name "${KEY}" --organization "${ORG}"
+
+          hammer activation-key create \
+          --name "act-${LC_ENV}-app-${KEY_LABEL}-${arch}" \
+          --lifecycle-environment "${LC_ENV}" \
+          --organization "${ORG}"
+
+          #create app components
+          TMP_IFS=$IFS
+          IFS=","; for value in ${RHEL6APPS[$KEY]}
+          do
+            ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
+
+            hammer hostgroup create --name "${value}" \
+            --parent-id "${ParentID}" \
+            --architecture "${arch}" \
+            --operatingsystem "${OS}" \
+            --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_7Server" \
+            --partition-table "${PTABLE_NAME}" \
+            --subnet "${DOMAIN}" \
+            --domain "${DOMAIN}" \
+            --lifecycle-environment "${LC_ENV}" \
+            --puppet-proxy "${PuppetProxy}" \
+            --puppet-ca-proxy "${PuppetProxy}" \
+            --organizations "${ORG}" \
+            --locations "${LOCATIONS}"
+
+            hammer host-collection create --name "${KEY}-${value}" --organization "${ORG}"
+
+            hammer activation-key create \
+            --name "act-${LC_ENV}-app-${KEY_LABEL}-${value}-${arch}" \
+            --lifecycle-environment "${LC_ENV}" \
+            --organization "${ORG}"
+          done
+          IFS=$TMP_IFS
+        done
+    done
   fi
 done
