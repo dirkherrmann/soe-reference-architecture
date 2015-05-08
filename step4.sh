@@ -14,11 +14,20 @@ source "${DIR}/common.sh"
 
 ###################################################################################################
 #
-# CORE BUILD PUPPET MODULE PUSH 
+# EXAMPLE PUPPET MODULES PUSH 
 #
 ###################################################################################################
 # we need to push our pre-built puppet modules into git and enable the repo sync
 # TODO double-check if this is the right chapter for this task
+
+# TODO create a local git repo and make it available as sync repo
+# in the meantime let's push the modules inside our example module dir directly
+# push the example puppet module into our $ORG Puppet Repo
+for module in $(ls ./puppet/*gz)
+do
+	echo "Pushing example module $module into our puppet repo"
+	hammer -v repository upload-content --organization $ORG --product ACME --name "ACME Puppet Repo" --path $module
+done
 
 # the following lines are the bash work-around for pulp-puppet-module-builder
 #for file in $@
