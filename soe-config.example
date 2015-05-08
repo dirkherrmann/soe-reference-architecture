@@ -32,6 +32,9 @@ export EPEL6_ENABLED=0
 export OSE3_ENABLED=0
 
 # enable if we want to use puppetforge repository and need to sync it
+# Please note that currently you can not sync a particular subset, only the entire repo
+# for further information have a look here: https://access.redhat.com/solutions/1377233
+# we recommend to let this option disabled until you really want to sync the entire forge repo
 export PUPPETFORGE_ENABLED=0
 
 # the hostname of git server which holds custom puppet modules

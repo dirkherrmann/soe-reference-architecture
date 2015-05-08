@@ -170,8 +170,9 @@ hammer repository synchronize --organization "$ORG" --product "EPEL7-2" --async
 ###################################################################################################
 if [ "$PUPPETFORGE_ENABLED" -eq 1 ]
 then
-	# TODO check if we really need the entire repo or just selected modules from it
-	# puppet forge repo
+	echo "Please note that currently you can not sync a particular subset, only the entire repo."
+	echo "For further information have a look here: https://access.redhat.com/solutions/1377233"
+	# we recommend to let this option disabled until you really want to sync the entire forge repo
 	hammer product create --name='PuppetForge' --organization=$ORG
 	hammer repository create --name='Puppet Forge' --organization=$ORG --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
 fi
