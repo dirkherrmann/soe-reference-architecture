@@ -24,22 +24,30 @@ source "${DIR}/common.sh"
 # Bareos GPG keys
 wget -O /tmp/bareos7.key http://download.bareos.org/bareos/release/latest/RHEL_7/repodata/repomd.xml.key
 hammer gpg create --name 'GPG-Bareos-RHEL7' --organization "$ORG" --key /tmp/bareos7.key
-wget -O /tmp/bareos6.key http://download.bareos.org/bareos/release/latest/RHEL_6/repodata/repomd.xml.key
-hammer gpg create --name 'GPG-Bareos-RHEL6' --organization "$ORG" --key /tmp/bareos6.key
+
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	wget -O /tmp/bareos6.key http://download.bareos.org/bareos/release/latest/RHEL_6/repodata/repomd.xml.key
+	hammer gpg create --name 'GPG-Bareos-RHEL6' --organization "$ORG" --key /tmp/bareos6.key
+fi
 
 # EPEL 6 & 7 GPG keys (EPEL 6 only if enabled in config file)
 wget -O /tmp/EPEL7.key https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-7 
 hammer gpg create --name 'GPG-EPEL-RHEL7' --organization "$ORG" --key /tmp/EPEL7.key
 
-if [ "$EPEL6_ENABLED" -eq 1 ]
+if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	wget -O /tmp/EPEL6.key https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
 	hammer gpg create --name 'GPG-EPEL-RHEL6' --organization "$ORG" --key /tmp/EPEL6.key
 fi
 
 # VMware (R) tools GPG key
-wget -O /tmp/vmware.key wget http://packages.vmware.com/tools/keys/VMWARE-PACKAGING-GPG-RSA-KEY.pub
-hammer gpg create --name 'GPG-VMware-RHEL6' --organization "$ORG" --key /tmp/vmware.key
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+
+	wget -O /tmp/vmware.key wget http://packages.vmware.com/tools/keys/VMWARE-PACKAGING-GPG-RSA-KEY.pub
+	hammer gpg create --name 'GPG-VMware-RHEL6' --organization "$ORG" --key /tmp/vmware.key
+fi
 
 # ACME custom GPG key
 # to ensure that our example rpms will work we do not create but download and use the GPG key we've created for the reference architecture
@@ -66,7 +74,7 @@ hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily syn
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'  
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'  
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
-
+hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64' 
 # TODO do we need additional channels for Sat 6.1 (satellite-tools?)
 
 # RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file
@@ -76,45 +84,67 @@ then
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (Kickstart)'  
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (RPMs)'  
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)'  
+	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - Extras RPMs x86_64' 
   
 fi
 
-# sync all RHEL7 packages
+# sync all RHEL packages
 hammer product synchronize --organization $ORG --name  'Red Hat Enterprise Linux Server' --async
 
 # set sync plan
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Enterprise Linux Server' 
 
 
-# TODO check if we sync already the repos for 3rd party software here (EPEL, Bareos, VMware Tools)
-
-# Bareos Backup Management Software repository sync
-hammer product create --name='Bareos-Backup-RHEL6' --organization="$ORG"
-hammer product create --name='Bareos-Backup-RHEL7' --organization="$ORG"
-hammer repository create --name='Bareos-RHEL7-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL7' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_7/
-
-# TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
-hammer repository create --name='Bareos-RHEL6-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL6' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_6/
-
-# add according GPG keys imported during step 1
-hammer product update --gpg-key 'GPG-Bareos-RHEL7' --name 'Bareos-Backup-RHEL7' --organization $ORG
-hammer product update --gpg-key 'GPG-Bareos-RHEL6' --name 'Bareos-Backup-RHEL6' --organization $ORG
-
-# add both products to our daily sync plan created during step 1
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL6"
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL7"
-# run synchronization task with async option for both products
-hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL6" --async
-hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL7" --async
-
 # TODO additional repos 2 sync as defined in CONFIG section
 
 ###################################################################################################
 #
-# EPEL Repo for RHEL6 repos only if EPEL6_ENABLED param is set to 1 in config file
+# Bareos Backup Management Software
 #
 ###################################################################################################
-if [ "$EPEL6_ENABLED" -eq 1 ]
+hammer product create --name='Bareos-Backup-RHEL7' --organization="$ORG"
+hammer repository create --name='Bareos-RHEL7-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL7' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_7/
+# add according GPG keys imported during step 1
+hammer product update --gpg-key 'GPG-Bareos-RHEL7' --name 'Bareos-Backup-RHEL7' --organization $ORG
+# add to our daily sync plan created during step 1
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL7"
+# run synchronization task with async option for both products
+hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL7" --async
+
+# Bareos 6 repos only if RHEL6_ENABLED param is set to 1 in config file
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+
+	hammer product create --name='Bareos-Backup-RHEL6' --organization="$ORG"
+	# TODO check what happens here since Bareos is using the same RHEL6 repo for both i686 and x86_64
+	hammer repository create --name='Bareos-RHEL6-x86_64' --organization="$ORG" --product='Bareos-Backup-RHEL6' --content-type='yum' --publish-via-http=true --url=http://download.bareos.org/bareos/release/latest/RHEL_6/
+	hammer product update --gpg-key 'GPG-Bareos-RHEL6' --name 'Bareos-Backup-RHEL6' --organization $ORG
+	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Bareos-Backup-RHEL6"
+	hammer repository synchronize --organization "$ORG" --product "Bareos-Backup-RHEL6" --async
+fi
+
+
+###################################################################################################
+#
+# VMware Tools (only required if RHEL6) only if RHEL6_ENABLED param is set to 1 in config file
+#
+###################################################################################################
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	hammer product create --name='VMware-Tools-RHEL6' --organization="$ORG"
+	# TODO add VMware vSphere version or repo to config file
+	hammer repository create --name='VMware-Tools-RHEL6-x86_64' --organization="$ORG" --product='VMware-Tools-RHEL6' --content-type='yum' --publish-via-http=true --url='https://packages.vmware.com/tools/esx/5.1u2/rhel6/x86_64/'
+	hammer product update --gpg-key 'GPG-VMware-RHEL6' --name 'VMware-Tools-RHEL6' --organization $ORG
+	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "VMware-Tools-RHEL6"
+	hammer repository synchronize --organization "$ORG" --product "VMware-Tools-RHEL6" --async
+
+fi
+###################################################################################################
+#
+# EPEL Repo for RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file
+#
+###################################################################################################
+if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	hammer product create --name='EPEL6' --organization="$ORG"
 	hammer repository create --name='EPEL6-x86_64' --organization="$ORG" --product='EPEL6' --content-type='yum' --publish-via-http=true --url=http://dl.fedoraproject.org/pub/epel/6/x86_64/

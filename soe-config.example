@@ -15,6 +15,7 @@ export subscription_manifest_loc="/tmp/manifest.zip"
 
 # per default we're using RHEL7 only for all hosts. optional you can enable RHEL6
 # NOTE: this requires a lot of additional disk space for Red Hat and 3rd repos we will sync during soe-prep.sh
+# beside the RHEL6 channels this additional enables VMware Tools (only req by RHEL6), Bareos and EPEL for RHEL6
 export RHEL6_ENABLED=0 
 
 
@@ -23,9 +24,6 @@ export RHEL6_ENABLED=0
 # please define here only additional RH repositories you want to sync
 export additional_rh_repos_to_sync=""
 
-# # per default we're using EPEL7 for some example apps + nagios. optional you can enable EPEL repositories for RHEL 6
-# NOTE: this requires a lot of additional disk space for both: Red Hat and 3rd repos we will sync during soe-prep.sh
-export EPEL6_ENABLED=0 
 
 # enable if you want to use OpenShift Enterprise 3 as an additional example application (not covered inside this refarch
 # but covered in cgoern's refarch TODO (see chapter XYZ)

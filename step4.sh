@@ -40,7 +40,7 @@ done
 # RHEL 6 Core Build Content View - TODO NOT TESTED YET!
 #
 ###################################################################################################
-if [ "$EPEL6_ENABLED" -eq 1 ]
+if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	hammer content-view create --name "cv-os-rhel-6Server" --description "RHEL Server 6 Core Build Content View" --organization "$ORG"
 	# software repositories
@@ -49,12 +49,7 @@ then
 	# TODO has to be substituted by 6.1 sat-tools channel which is not there yet
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server - RH Common RPMs x86_64 6Server' --product 'Red Hat Enterprise Linux Server'
 
-	# EPEL 6 only if enabled in config file
-	if [ "$EPEL6_ENABLED" -eq 1 ]
-	then
-		hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'EPEL6-x86_64-2' --product 'EPEL6-2'
-	fi
-
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'EPEL6-x86_64-2' --product 'EPEL6-2'
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Bareos-RHEL6-x86_64' --product 'Bareos-Backup-RHEL6'
 
 	# TODO puppet modules which are part of core build 
