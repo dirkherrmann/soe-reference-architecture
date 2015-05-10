@@ -30,9 +30,9 @@ hammer template dump --name "Boot disk iPXE - host" > "/tmp/tmp.bdp"
 hammer template create --file /tmp/tmp.bdp --name "${ORG} Boot disk iPXE - host" --organizations "${ORG}" --type Bootdisk
 
 # add operating system no matter if rhel5,6 or 7,.. to the SOE kickstart template since we follow the principal of having a single kickstart template for all OS releases
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default PXELinux" --operatingsystem ""${RHEL_Release}""; done
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default" --operatingsystem ""${RHEL_Release}""; done
-hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Boot disk iPXE - host" --operatingsystem ""${RHEL_Release}""; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default PXELinux" --operatingsystem "${RHEL_Release}"; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Kickstart default" --operatingsystem "${RHEL_Release}"; done
+hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Boot disk iPXE - host" --operatingsystem "${RHEL_Release}"; done
 
 # create custom ptable file to import via hammer
 cat > /tmp/tmp.${ORG}.ptable <<- EOF
@@ -166,7 +166,8 @@ done
 # create compute resource
 if [[ -n "${COMPUTE_PROVIDER}" ]] && [[ "${COMPUTE_PROVIDER}" = "Ovirt" ]]
 then
-  COMPUTE_PROVIDER="RHEV"
+  COMPUTE_PROV="RHEV"
+  COMPUTE_NAME="${COMPUTE_PROV}-${ORG}-${COMPUTE_LOCATION}"
 fi
 
 if [[ -n "$COMPUTE_PROVIDER" ]] ;then
