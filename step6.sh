@@ -1,13 +1,11 @@
-#! /bin/bash
-
+#!/bin/bash
 #
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 #
-
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 
-if test -f $HOME/.soe-config;
-  then
+if test -f $HOME/.soe-config
+then
   source $HOME/.soe-config
 else
   echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
@@ -166,9 +164,9 @@ done
 # activation keys are create during host group creation
 
 # create compute resource
-if [[ -n "${COMPUTE_PROVIDER}" && "${COMPUTE_PROVIDER}" = "Ovirt" ]]
-  then
-  "${COMPUTE_PROVIDER}" = "RHEV"
+if [[ -n "${COMPUTE_PROVIDER}" ]] && [[ "${COMPUTE_PROVIDER}" = "Ovirt" ]]
+then
+  COMPUTE_PROVIDER="RHEV"
 fi
 
 if [[ -n "$COMPUTE_PROVIDER" ]] ;then
@@ -204,7 +202,7 @@ do
         hammer activation-key create \
           --organization "${ORG}" \
           --content-view "cv-os-rhel-7Server" \
-          --name "act-\"${LC_ENV}\"-os-rhel-7Server-\"${arch}\"" \
+          --name "act-${LC_ENV}-os-rhel-7Server-${arch}" \
           --lifecycle-environment "${LC_ENV}"
 
         hammer hostgroup create --name "RHEL-7Server-${arch}" \
@@ -224,7 +222,7 @@ do
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
 
         hammer activation-key create \
-          --name "act-\"${LC_ENV}\"-os-rhel-6Server-\"${arch}\"" \
+          --name "act-${LC_ENV}-os-rhel-6Server-${arch}" \
           --content-view "cv-os-rhel-6Server" \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
@@ -270,15 +268,24 @@ do
 
           if [[ $KEY = "Infrastructure Services" ]]; then
             TYPE="infra"
+            KEY_LABEL="infra"
           else
             TYPE="biz"
+            KEY_LABEL="${KEY}"
           fi
+
+          hammer host-collection create --name "${KEY}" --organization "${ORG}"
+
+          hammer activation-key create \
+              --name "act-${LC_ENV}-app-${KEY_LABEL}-${arch}" \
+              --lifecycle-environment "${LC_ENV}" \
+              --organization "${ORG}"
 
           ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
 
           #create toplevel APP
           hammer hostgroup create --name "${KEY}" \
-              --parent-id "${ParentID}"
+              --parent-id "${ParentID}" \
               --architecture "${arch}" \
               --operatingsystem "${OS}" \
               --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
@@ -290,13 +297,6 @@ do
               --puppet-ca-proxy "${PuppetProxy}" \
               --organizations "${ORG}" \
               --locations "${LOCATIONS}"
-
-          hammer host-collection create --name "${KEY}" --organization "${ORG}"
-
-          hammer activation-key create \
-              --name "act-${LC_ENV}-app-\"${KEY}\"-${arch}" \
-              --lifecycle-environment "${LC_ENV}" \
-              --organization "${ORG}"
 
           #create app components
           TMP_IFS=$IFS
@@ -318,12 +318,12 @@ do
                 --organizations "${ORG}" \
                 --locations "${LOCATIONS}"
 
-            hammer host-collection create --name "\"${KEY}\"-\"${value}\"" --organization "${ORG}"
+                hammer host-collection create --name "${KEY}-${value}" --organization "${ORG}"
 
-            hammer activation-key create \
-                --name "act-${LC_ENV}-app-\"${KEY}\"-\"${value}\"-${arch}" \
-                --lifecycle-environment "${LC_ENV}" \
-                --organization "${ORG}"
+                hammer activation-key create \
+                    --name "act-${LC_ENV}-app-${KEY_LABEL}-${value}-${arch}" \
+                    --lifecycle-environment "${LC_ENV}" \
+                    --organization "${ORG}"
           done
           IFS=$TMP_IFS
         done
