@@ -69,7 +69,10 @@ hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --asyn
 # workaround provided by mmccune:
 VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
 # echo "Promoting CV VersionID: $VID"
-hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
+
+# commenting this out since we can not promote until publish has been done
+# TODO write a loop which waits until the publish is done, maybe in background
+# hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
 
