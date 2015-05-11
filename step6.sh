@@ -5,7 +5,6 @@
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 #
 #TODO: add content-views to act-key & HG
-#TODO: map ENV to HG creation
 
 if test -f $HOME/.soe-config
 then
@@ -205,9 +204,9 @@ do
         #create activation key while we create the according hostgroup
         hammer activation-key create \
           --organization "${ORG}" \
-          --content-view "cv-os-rhel-7Server" \
           --name "act-${LC_ENV}-os-rhel-7Server-${arch}" \
           --lifecycle-environment "${LC_ENV}"
+          #--content-view "cv-os-rhel-7Server" \
 
         hammer hostgroup create --name "RHEL-7Server-${arch}" \
           --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
@@ -219,8 +218,8 @@ do
           --domain "${DOMAIN}" \
           --lifecycle-environment "${LC_ENV}" \
           --organizations "${ORG}" \
-          --locations "${LOCATIONS}" \
-          --content-view "cv-os-rhel-7Server"
+          --locations "${LOCATIONS}"
+          #--content-view "cv-os-rhel-7Server"
       fi
 
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
@@ -265,10 +264,10 @@ RHEL7APPS=( ["DEV"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,M
             ["Shop-DEV"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
             ["Shop-QA"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
             ["Shop-PROD"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
-            ["Web-DEV"]='[ACME Website]="Content,Wordpress,MariaDB"'\
-            ["Web-QA"]='[ACME Website]="Content,Wordpress,MariaDB"'\
-            ["Web-UAT"]='[ACME Website]="Content,Wordpress,MariaDB"'\
-            ["Web-PROD"]='[ACME Website]="Content,Wordpress,MariaDB"'\
+            ["Web-DEV"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
+            ["Web-QA"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
+            ["Web-UAT"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
+            ["Web-PROD"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
           )
 
 for STAGE in "${!RHEL7APPS[@]}"
@@ -298,9 +297,10 @@ do
         hammer host-collection create --name "${KEY}" --organization "${ORG}"
 
         hammer activation-key create \
-        --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" \
+        --name $(echo "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" | tr '[[:upper:]' '[[:lower:]]') \
         --lifecycle-environment "${LC_ENV}" \
         --organization "${ORG}"
+        #--content-view
 
         ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
 
@@ -318,6 +318,7 @@ do
         --puppet-ca-proxy "${PuppetProxy}" \
         --organizations "${ORG}" \
         --locations "${LOCATIONS}"
+        #--content-view
 
         for APP in ${TOPLVLHG[$KEY]}
         do
@@ -336,95 +337,18 @@ do
           --puppet-ca-proxy "${PuppetProxy}" \
           --organizations "${ORG}" \
           --locations "${LOCATIONS}"
+          #--content-view
 
-          hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
+          hammer host-collection create --name "${APP}" --organization "${ORG}"
 
           hammer activation-key create \
-          --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" \
+          --name $(echo "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" | tr '[[:upper:]' '[[:lower:]]' | sed s'/ /_/g') \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
+          #--content-view
         done
         IFS=$TMPIFS
       done
     fi
-  done
-done
-
-for STAGE in "${!RHEL6APPS[@]}"
-do
-  LC_ENV=${STAGE}
-  OS=$(hammer os list | awk -F '|' '/RedHat 6/ {print $2;exit}' | xargs)
-  for arch in ${ARCH}
-  do
-
-    declare -A TOPLVLHG
-    eval TOPLVLHG=( "${RHEL6APPS[$STAGE]}" )
-
-    TMPIFS=$IFS
-    IFS=","
-    for KEY in ${!TOPLVLHG[@]}
-    do
-      if [[ $KEY = "Infrastructure Services" ]]; then
-        TYPE="infra"
-        KEY_LABEL="infra"
-      else
-        TYPE="biz"
-        KEY_LABEL="${KEY}"
-        KEY_LABEL_SHORT=$(echo $KEY_LABEL | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]')
-      fi
-
-      hammer host-collection create --name "${KEY}" --organization "${ORG}"
-
-      hammer activation-key create \
-      --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" \
-      --lifecycle-environment "${LC_ENV}" \
-      --organization "${ORG}"
-
-      ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-6Server-${arch}[[:space:]]/ {print \$1}")
-
-      #create toplevel APP
-      hammer hostgroup create --name "${KEY}" \
-      --parent-id "${ParentID}" \
-      --architecture "${arch}" \
-      --operatingsystem "${OS}" \
-      --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \
-      --partition-table "${PTABLE_NAME}" \
-      --subnet "${DOMAIN}" \
-      --domain "${DOMAIN}" \
-      --lifecycle-environment "${LC_ENV}" \
-      --puppet-proxy "${PuppetProxy}" \
-      --puppet-ca-proxy "${PuppetProxy}" \
-      --organizations "${ORG}" \
-      --locations "${LOCATIONS}"
-
-      TMPIFS=$IFS
-      IFS=","
-      for APP in ${TOPLVLHG[$KEY]}
-      do
-        ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-6Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
-
-        hammer hostgroup create --name "${APP}" \
-        --parent-id "${ParentID}" \
-        --architecture "${arch}" \
-        --operatingsystem "${OS}" \
-        --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \
-        --partition-table "${PTABLE_NAME}" \
-        --subnet "${DOMAIN}" \
-        --domain "${DOMAIN}" \
-        --lifecycle-environment "${LC_ENV}" \
-        --puppet-proxy "${PuppetProxy}" \
-        --puppet-ca-proxy "${PuppetProxy}" \
-        --organizations "${ORG}" \
-        --locations "${LOCATIONS}"
-
-        hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
-
-        hammer activation-key create \
-        --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" \
-        --lifecycle-environment "${LC_ENV}" \
-        --organization "${ORG}"
-      done
-      IFS=$TMPIFS
-    done
   done
 done
