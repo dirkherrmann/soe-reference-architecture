@@ -257,6 +257,20 @@ done
 
 # add hostgroups & activation keys for the APPS we want to deploy
 # Applications will only exist in non Library ENV
+
+declare -A RHEL7APPS
+RHEL7APPS=( ["DEV"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
+            ["QA"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
+            ["PROD"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
+            ["Shop-DEV"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
+            ["Shop-QA"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
+            ["Shop-PROD"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
+            ["Web-DEV"]='[ACME Website]="Content,Wordpress,MariaDB"'\
+            ["Web-QA"]='[ACME Website]="Content,Wordpress,MariaDB"'\
+            ["Web-UAT"]='[ACME Website]="Content,Wordpress,MariaDB"'\
+            ["Web-PROD"]='[ACME Website]="Content,Wordpress,MariaDB"'\
+          )
+
 for STAGE in "${!RHEL7APPS[@]}"
 do
   LC_ENV=${STAGE}
@@ -267,6 +281,9 @@ do
 
       declare -A TOPLVLHG
       eval TOPLVLHG=( "${RHEL7APPS[$STAGE]}" )
+
+      TMPIFS=$IFS
+      IFS=","
       for KEY in ${!TOPLVLHG[@]}
       do
         if [[ $KEY = "Infrastructure Services" ]]; then
@@ -275,12 +292,13 @@ do
         else
           TYPE="biz"
           KEY_LABEL="${KEY}"
+          KEY_LABEL_SHORT=$(echo $KEY_LABEL | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]')
         fi
 
         hammer host-collection create --name "${KEY}" --organization "${ORG}"
 
         hammer activation-key create \
-        --name "act-${LC_ENV}-${KEY_LABEL}-${arch}" \
+        --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" \
         --lifecycle-environment "${LC_ENV}" \
         --organization "${ORG}"
 
@@ -301,8 +319,6 @@ do
         --organizations "${ORG}" \
         --locations "${LOCATIONS}"
 
-        TMPIFS=$IFS
-        IFS=","
         for APP in ${TOPLVLHG[$KEY]}
         do
           ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
@@ -324,7 +340,7 @@ do
           hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
 
           hammer activation-key create \
-          --name "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" \
+          --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
         done
@@ -343,6 +359,9 @@ do
 
     declare -A TOPLVLHG
     eval TOPLVLHG=( "${RHEL6APPS[$STAGE]}" )
+
+    TMPIFS=$IFS
+    IFS=","
     for KEY in ${!TOPLVLHG[@]}
     do
       if [[ $KEY = "Infrastructure Services" ]]; then
@@ -351,12 +370,13 @@ do
       else
         TYPE="biz"
         KEY_LABEL="${KEY}"
+        KEY_LABEL_SHORT=$(echo $KEY_LABEL | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]')
       fi
 
       hammer host-collection create --name "${KEY}" --organization "${ORG}"
 
       hammer activation-key create \
-      --name "act-${LC_ENV}-${KEY_LABEL}-${arch}" \
+      --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" \
       --lifecycle-environment "${LC_ENV}" \
       --organization "${ORG}"
 
@@ -400,7 +420,7 @@ do
         hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
 
         hammer activation-key create \
-        --name "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" \
+        --name "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" \
         --lifecycle-environment "${LC_ENV}" \
         --organization "${ORG}"
       done
