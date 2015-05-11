@@ -3,6 +3,9 @@
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 #
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
+#
+#TODO: add content-views to act-key & HG
+#TODO: map ENV to HG creation
 
 if test -f $HOME/.soe-config
 then
@@ -254,100 +257,61 @@ done
 
 # add hostgroups & activation keys for the APPS we want to deploy
 # Applications will only exist in non Library ENV
-
-hammer lifecycle-environment list --organization ${ORG} | awk -F "|" '/[[:digit:]]/ {print $2}' | sed s'/ //' | while read LC_ENV
+for STAGE in "${!RHEL7APPS[@]}"
 do
-  if [[ ${LC_ENV} != Library ]]; then
-    #RHEL7
-    OS=$(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | xargs)
-    for arch in ${ARCH}
-    do
-      if [[ ${arch} != i386 ]]; then
+  LC_ENV=${STAGE}
+  OS=$(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | xargs)
+  for arch in ${ARCH}
+  do
+    if [[ ${arch} != i386 ]]; then
 
-        for KEY in "${!RHEL7APPS[@]}"
+      declare -A TOPLVLHG
+      eval TOPLVLHG=( "${RHEL7APPS[$STAGE]}" )
+      for KEY in ${!TOPLVLHG[@]}
+      do
+        if [[ $KEY = "Infrastructure Services" ]]; then
+          TYPE="infra"
+          KEY_LABEL="infra"
+        else
+          TYPE="biz"
+          KEY_LABEL="${KEY}"
+        fi
+
+        hammer host-collection create --name "${KEY}" --organization "${ORG}"
+
+        hammer activation-key create \
+        --name "act-${LC_ENV}-${KEY_LABEL}-${arch}" \
+        --lifecycle-environment "${LC_ENV}" \
+        --organization "${ORG}"
+
+        ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
+
+        #create toplevel APP
+        hammer hostgroup create --name "${KEY}" \
+        --parent-id "${ParentID}" \
+        --architecture "${arch}" \
+        --operatingsystem "${OS}" \
+        --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
+        --partition-table "${PTABLE_NAME}" \
+        --subnet "${DOMAIN}" \
+        --domain "${DOMAIN}" \
+        --lifecycle-environment "${LC_ENV}" \
+        --puppet-proxy "${PuppetProxy}" \
+        --puppet-ca-proxy "${PuppetProxy}" \
+        --organizations "${ORG}" \
+        --locations "${LOCATIONS}"
+
+        TMPIFS=$IFS
+        IFS=","
+        for APP in ${TOPLVLHG[$KEY]}
         do
+          ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
 
-          if [[ $KEY = "Infrastructure Services" ]]; then
-            TYPE="infra"
-            KEY_LABEL="infra"
-          else
-            TYPE="biz"
-            KEY_LABEL="${KEY}"
-          fi
-
-          hammer host-collection create --name "${KEY}" --organization "${ORG}"
-
-          hammer activation-key create \
-              --name "act-${LC_ENV}-app-${KEY_LABEL}-${arch}" \
-              --lifecycle-environment "${LC_ENV}" \
-              --organization "${ORG}"
-
-          ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
-
-          #create toplevel APP
-          hammer hostgroup create --name "${KEY}" \
-              --parent-id "${ParentID}" \
-              --architecture "${arch}" \
-              --operatingsystem "${OS}" \
-              --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
-              --partition-table "${PTABLE_NAME}" \
-              --subnet "${DOMAIN}" \
-              --domain "${DOMAIN}" \
-              --lifecycle-environment "${LC_ENV}" \
-              --puppet-proxy "${PuppetProxy}" \
-              --puppet-ca-proxy "${PuppetProxy}" \
-              --organizations "${ORG}" \
-              --locations "${LOCATIONS}"
-
-          #create app components
-          TMP_IFS=$IFS
-          IFS=","; for value in ${RHEL7APPS[$KEY]}
-          do
-            ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
-
-            hammer hostgroup create --name "${value}" \
-                --parent-id "${ParentID}" \
-                --architecture "${arch}" \
-                --operatingsystem "${OS}" \
-                --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
-                --partition-table "${PTABLE_NAME}" \
-                --subnet "${DOMAIN}" \
-                --domain "${DOMAIN}" \
-                --lifecycle-environment "${LC_ENV}" \
-                --puppet-proxy "${PuppetProxy}" \
-                --puppet-ca-proxy "${PuppetProxy}" \
-                --organizations "${ORG}" \
-                --locations "${LOCATIONS}"
-
-                hammer host-collection create --name "${KEY}-${value}" --organization "${ORG}"
-
-                hammer activation-key create \
-                    --name "act-${LC_ENV}-app-${KEY_LABEL}-${value}-${arch}" \
-                    --lifecycle-environment "${LC_ENV}" \
-                    --organization "${ORG}"
-          done
-          IFS=$TMP_IFS
-        done
-      fi
-        for KEY in "${!RHEL6APPS[@]}"
-        do
-
-          if [[ $KEY = "Infrastructure Services" ]]; then
-            TYPE="infra"
-            KEY_LABEL="infra"
-          else
-            TYPE="biz"
-            KEY_LABEL="${KEY}"
-          fi
-
-          ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
-
-          #create toplevel APP
-          hammer hostgroup create --name "${KEY}" \
-          --parent-id "${ParentID}"
+          hammer hostgroup create --name "${APP}" \
+          --parent-id "${ParentID}" \
           --architecture "${arch}" \
           --operatingsystem "${OS}" \
-          --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_7Server" \
+          --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_7_Server_Kickstart_${arch}_7Server" \
           --partition-table "${PTABLE_NAME}" \
           --subnet "${DOMAIN}" \
           --domain "${DOMAIN}" \
@@ -357,42 +321,90 @@ do
           --organizations "${ORG}" \
           --locations "${LOCATIONS}"
 
-          hammer host-collection create --name "${KEY}" --organization "${ORG}"
+          hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
 
           hammer activation-key create \
-          --name "act-${LC_ENV}-app-${KEY_LABEL}-${arch}" \
+          --name "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
-
-          #create app components
-          TMP_IFS=$IFS
-          IFS=","; for value in ${RHEL6APPS[$KEY]}
-          do
-            ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
-
-            hammer hostgroup create --name "${value}" \
-            --parent-id "${ParentID}" \
-            --architecture "${arch}" \
-            --operatingsystem "${OS}" \
-            --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_7Server" \
-            --partition-table "${PTABLE_NAME}" \
-            --subnet "${DOMAIN}" \
-            --domain "${DOMAIN}" \
-            --lifecycle-environment "${LC_ENV}" \
-            --puppet-proxy "${PuppetProxy}" \
-            --puppet-ca-proxy "${PuppetProxy}" \
-            --organizations "${ORG}" \
-            --locations "${LOCATIONS}"
-
-            hammer host-collection create --name "${KEY}-${value}" --organization "${ORG}"
-
-            hammer activation-key create \
-            --name "act-${LC_ENV}-app-${KEY_LABEL}-${value}-${arch}" \
-            --lifecycle-environment "${LC_ENV}" \
-            --organization "${ORG}"
-          done
-          IFS=$TMP_IFS
         done
+        IFS=$TMPIFS
+      done
+    fi
+  done
+done
+
+for STAGE in "${!RHEL6APPS[@]}"
+do
+  LC_ENV=${STAGE}
+  OS=$(hammer os list | awk -F '|' '/RedHat 6/ {print $2;exit}' | xargs)
+  for arch in ${ARCH}
+  do
+
+    declare -A TOPLVLHG
+    eval TOPLVLHG=( "${RHEL6APPS[$STAGE]}" )
+    for KEY in ${!TOPLVLHG[@]}
+    do
+      if [[ $KEY = "Infrastructure Services" ]]; then
+        TYPE="infra"
+        KEY_LABEL="infra"
+      else
+        TYPE="biz"
+        KEY_LABEL="${KEY}"
+      fi
+
+      hammer host-collection create --name "${KEY}" --organization "${ORG}"
+
+      hammer activation-key create \
+      --name "act-${LC_ENV}-${KEY_LABEL}-${arch}" \
+      --lifecycle-environment "${LC_ENV}" \
+      --organization "${ORG}"
+
+      ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-6Server-${arch}[[:space:]]/ {print \$1}")
+
+      #create toplevel APP
+      hammer hostgroup create --name "${KEY}" \
+      --parent-id "${ParentID}" \
+      --architecture "${arch}" \
+      --operatingsystem "${OS}" \
+      --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \
+      --partition-table "${PTABLE_NAME}" \
+      --subnet "${DOMAIN}" \
+      --domain "${DOMAIN}" \
+      --lifecycle-environment "${LC_ENV}" \
+      --puppet-proxy "${PuppetProxy}" \
+      --puppet-ca-proxy "${PuppetProxy}" \
+      --organizations "${ORG}" \
+      --locations "${LOCATIONS}"
+
+      TMPIFS=$IFS
+      IFS=","
+      for APP in ${TOPLVLHG[$KEY]}
+      do
+        ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-6Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
+
+        hammer hostgroup create --name "${APP}" \
+        --parent-id "${ParentID}" \
+        --architecture "${arch}" \
+        --operatingsystem "${OS}" \
+        --medium "${ORG}/Library/Red_Hat_Server/Red_Hat_Enterprise_Linux_6_Server_Kickstart_${arch}_6Server" \
+        --partition-table "${PTABLE_NAME}" \
+        --subnet "${DOMAIN}" \
+        --domain "${DOMAIN}" \
+        --lifecycle-environment "${LC_ENV}" \
+        --puppet-proxy "${PuppetProxy}" \
+        --puppet-ca-proxy "${PuppetProxy}" \
+        --organizations "${ORG}" \
+        --locations "${LOCATIONS}"
+
+        hammer host-collection create --name "${KEY}-${APP}" --organization "${ORG}"
+
+        hammer activation-key create \
+        --name "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" \
+        --lifecycle-environment "${LC_ENV}" \
+        --organization "${ORG}"
+      done
+      IFS=$TMPIFS
     done
-  fi
+  done
 done
