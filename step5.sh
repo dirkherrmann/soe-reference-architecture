@@ -4,6 +4,10 @@
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 # 
 
+echo 'currently broken due to error in getting the CV version ID, see inside the script. Exit'; exit
+
+
+
 # TODO short desc and outcome of this step
 
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
@@ -68,14 +72,17 @@ TASKID=$(hammer content-view  publish --name "cv-app-docker" --organization "$OR
 
 # promote it to stage dev
 # TODO issue here, thanks mmccune to point me there: https://bugzilla.redhat.com/show_bug.cgi?id=1219585
-# we need to specify the version ID if there is more than version one
-# workaround provided by mmccune:
+# we need to specify the version ID if there is more than version one, workaround provided by mmccune:
+# TODO this seems to not work: error message: undefined method `pulp_id' for nil:NilClass
 VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
 # echo "Promoting CV VersionID: $VID"
 
 # TODO check if always the publish has been completed if the output of hammer task progress returns back
 hammer task progress --id $TASKID
+
+# promote to dev and grep the task id again
 hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
+# TODO has anybody a better way than using sed here?
 
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
