@@ -61,8 +61,11 @@ hammer content-view filter rule create --name docker --organization "$ORG" --con
 
 # add puppet modules from $ORG product repo to this CV
 hammer content-view puppet-module add --content-view cv-app-docker --name profile_dockerhost --organization $ORG
-# publish it
-hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --async
+
+# publish it and grep the task id since we need to wait until the task is finished before promoting it
+TASKID=$(hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --async) |  sed -e 's/Content view is being published with task //'
+# TODO has anybody a better way than using sed here?
+
 # promote it to stage dev
 # TODO issue here, thanks mmccune to point me there: https://bugzilla.redhat.com/show_bug.cgi?id=1219585
 # we need to specify the version ID if there is more than version one
@@ -70,11 +73,10 @@ hammer content-view  publish --name "cv-app-docker" --organization "$ORG" --asyn
 VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
 # echo "Promoting CV VersionID: $VID"
 
-# commenting this out since we can not promote until publish has been done
-# TODO write a loop which waits until the publish is done, maybe in background
-# STDOUT of publish command: Content view is being promoted with task 7410dabf-334e-4368-b72d-d677af88bce8
-# check if running hammer task progress --id 7410dabf-334e-4368-b72d-d677af88bce8
-# hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
+# TODO check if always the publish has been completed if the output of hammer task progress returns back
+hammer task progress --id $TASKID
+hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
+
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
 

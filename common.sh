@@ -2,6 +2,8 @@
 
 # Common functions for all the step scripts
 
+export LANG=en_US.utf8
+
 # check if the config exists and if yes source the config file 
 if  [ ! -f $HOME/.soe-config ]; then
   echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
