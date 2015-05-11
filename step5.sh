@@ -72,6 +72,8 @@ VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F
 
 # commenting this out since we can not promote until publish has been done
 # TODO write a loop which waits until the publish is done, maybe in background
+# STDOUT of publish command: Content view is being promoted with task 7410dabf-334e-4368-b72d-d677af88bce8
+# check if running hammer task progress --id 7410dabf-334e-4368-b72d-d677af88bce8
 # hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
 # TODO: figure out how we can schedule the 2nd promotion in background waiting on finishing the first one
