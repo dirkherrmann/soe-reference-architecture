@@ -204,7 +204,7 @@ do
         #create activation key while we create the according hostgroup
         hammer activation-key create \
           --organization "${ORG}" \
-          --name "act-${LC_ENV}-os-rhel-7Server-${arch}" \
+          --name $(echo "act-${LC_ENV}-os-rhel-7Server-${arch}" | tr '[[:upper:]' '[[:lower:]]') \
           --lifecycle-environment "${LC_ENV}"
           #--content-view "cv-os-rhel-7Server" \
 
@@ -225,7 +225,7 @@ do
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
 
         hammer activation-key create \
-          --name "act-${LC_ENV}-os-rhel-6Server-${arch}" \
+          --name $(echo "act-${LC_ENV}-os-rhel-6Server-${arch}" | tr '[[:upper:]' '[[:lower:]]') \
           --content-view "cv-os-rhel-6Server" \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
@@ -291,13 +291,12 @@ do
         else
           TYPE="biz"
           KEY_LABEL="${KEY}"
-          KEY_LABEL_SHORT=$(echo $KEY_LABEL | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]')
         fi
 
         hammer host-collection create --name "${KEY}" --organization "${ORG}"
 
         hammer activation-key create \
-        --name $(echo "act-${LC_ENV}-${KEY_LABEL_SHORT}-${arch}" | tr '[[:upper:]' '[[:lower:]]') \
+        --name $(echo "act-${LC_ENV}-${KEY_LABEL}-${arch}" | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]') \
         --lifecycle-environment "${LC_ENV}" \
         --organization "${ORG}"
         #--content-view
@@ -342,7 +341,7 @@ do
           hammer host-collection create --name "${APP}" --organization "${ORG}"
 
           hammer activation-key create \
-          --name $(echo "act-${LC_ENV}-${KEY_LABEL_SHORT}-${APP}-${arch}" | tr '[[:upper:]' '[[:lower:]]' | sed s'/ /_/g') \
+          --name $(echo "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" | tr '[[:upper:]' '[[:lower:]]' | sed s'/ /_/g') \
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
           #--content-view
