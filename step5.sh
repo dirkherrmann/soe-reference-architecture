@@ -4,9 +4,6 @@
 # this script automatically does the setup documented in the reference architecture "10 steps to create a SOE"
 # 
 
-echo 'currently broken due to error in getting the CV version ID, see inside the script. Exit'; exit
-
-
 
 # TODO short desc and outcome of this step
 
@@ -74,14 +71,16 @@ TASKID=$(hammer content-view  publish --name "cv-app-docker" --organization "$OR
 # TODO issue here, thanks mmccune to point me there: https://bugzilla.redhat.com/show_bug.cgi?id=1219585
 # we need to specify the version ID if there is more than version one, workaround provided by mmccune:
 # TODO this seems to not work: error message: undefined method `pulp_id' for nil:NilClass
-VID=`hammer content-view version list --content-view-id "cv-app-docker" | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
+# works with CV ID instead of CV name so we need to capture this first....
+CVID=$(hammer --csv content-view list --name cv-app-docker --organization $ORG | awk -F, {'print $1'} | grep -vi 'ID')
+VID=`hammer content-view version list --content-view-id $CVID | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
 # echo "Promoting CV VersionID: $VID"
 
 # TODO check if always the publish has been completed if the output of hammer task progress returns back
 hammer task progress --id $TASKID
 
 # promote to dev and grep the task id again
-hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
+# hammer content-view version promote --content-view "cv-app-docker" --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID
 # TODO has anybody a better way than using sed here?
 
 # NOTE: we can not promote it to the next stage (QA) until promotion to DEV is running
@@ -114,5 +113,34 @@ hammer content-view create --name "ccv-biz-acmeweb" --composite --description "C
 hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG" --async
 
 
+###################################################################################################
+###################################################################################################
+#												  #
+# COMPOSITE CONTENT VIEW PROMOTION								  #
+#												  #
+###################################################################################################
+###################################################################################################
+echo "Starting to promote our composite content views. This might take a while. Please be patient."
+
+# get a list of all CCVs using hammer instead of hardcoded list
+for CVID in $(hammer content-view list --organization ACME | awk -F "|" '($4 ~/true/) {print $1}');
+do
+	# define the right lifecycle path based on our naming convention
+	if echo $a |grep -qe '^ccv-biz-acmeweb.*'; then 
+		echo "biz app"; 
+
+	elif echo $a | grep -qe '^ccv-infra-.*'; then 
+		echo "infra app";
+	else 
+		echo "unknown type";
+	fi
+
+	# get most current CV version id (thanks to mmccune)
+	VID=`hammer content-view version list --content-view-id $CVID | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
+	# promote it to dev and return task id
+	TASKID=$(hammer content-view version promote --content-view-id $CVID  --organization "$ORG" --async --to-lifecycle-environment DEV --id $VID)
+	hammer task progress --id $TASKID
+
+done
 
 
