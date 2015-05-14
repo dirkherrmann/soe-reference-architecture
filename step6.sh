@@ -5,6 +5,9 @@
 # latest version in github: https://github.com/dirkherrmann/soe-reference-architecture
 #
 #TODO: add content-views to act-key & HG
+#TODO: add puppet modules to CONFIG GROUP & HG   <<<< create empty modules to add to hg and config groups for core build
+#TODO: add parameters to be used by PUPPET in HG <<<< PUPPET MODULES NEEDED FOR THIS
+#TODO: add subscriptions to act keys & Host Collections
 
 if test -f $HOME/.soe-config
 then
@@ -20,6 +23,13 @@ fi
 # Basic Provisioning Setup
 #
 ###################################################################################################
+
+# create location
+for LOC in ${LOCATIONS}
+do
+  hammer location create --name "${LOC}"
+  hammer location add-organization --name "${LOC}" --organization "${ORG}"
+done
 
 # clone Kickstart and PXE Boot template (actually we have to dump and create)
 hammer template dump --name "Satellite Kickstart Default" > "/tmp/tmp.skd"
@@ -37,33 +47,39 @@ hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHE
 hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHEL_Release; do hammer template add-operatingsystem --name "${ORG} Boot disk iPXE - host" --operatingsystem "${RHEL_Release}"; done
 
 # create custom ptable file to import via hammer
-cat > /tmp/tmp.${ORG}.ptable <<- EOF
+cat > /tmp/tmp.${ORG}.ptable <<- EOC
 <%#
 kind: ptable
-name: ${PTABLE_NAME}
+name: ptable-ACME-os-rhel-server
 oses:
 - RedHat 5
 - RedHat 6
 - RedHat 7
 %>
+#Dynamic
+PRI_DISK=$(awk '/[v|s]da|c0d0/ {print $4 ;exit}' /proc/partitions)
+grep -E -q '[v|s]db|c0d1' /proc/partitions  &&  SEC_DISK=$(awk '/[v|s]db/ {print $4 ;exit}' /proc/partitions)
+
+cat <<EOF > /tmp/diskpart.cfg
 zerombr
 clearpart --all --initlabel
-part /boot --fstype ext4 --size=128 --ondisk=sda --asprimary
-part pv.1 --size=1 --grow --ondisk=sda
+part /boot --fstype ext4 --size=512 --ondisk=${PRI_DISK} --asprimary
+part pv.1 --size=1 --grow --ondisk=${PRI_DISK}
 volgroup vg_sys --pesize=32768 pv.1
 logvol / --fstype ext4 --name=lv_root --vgname=vg_sys --size=2048 --fsoptions="noatime"
 logvol swap --fstype swap --name=lv_swap --vgname=vg_sys --size=2048
 logvol /home --fstype ext4 --name=lv_home --vgname=vg_sys --size=2048 --fsoptions="noatime,usrquota,grpquota"
 logvol /tmp --fstype ext4 --name=lv_tmp --vgname=vg_sys --size=1024 --fsoptions="noatime"
 logvol /usr --fstype ext4 --name=lv_usr --vgname=vg_sys --size=4096 --fsoptions="noatime"
-logvol /var --fstype ext4 --name=lv_var --vgname=vg_sys --size=3072 --fsoptions="noatime"
-logvol /var/log/ --fstype ext4 --name=lv_log --vgname=vg_sys --size=8192 --fsoptions="noatime"
+logvol /var --fstype ext4 --name=lv_var --vgname=vg_sys --size=2048 --fsoptions="noatime"
+logvol /var/log/ --fstype ext4 --name=lv_log --vgname=vg_sys --size=4096 --fsoptions="noatime"
 logvol /var/log/audit --fstype ext4 --name=lv_audit --vgname=vg_sys --size=256 --fsoptions="noatime"
 EOF
+EOC
 
 # create acme ptable
 # http://projects.theforeman.org/projects/foreman/wiki/Dynamic_disk_partitioning
-hammer partition-table create --name ${PTABLE_NAME} --os-family "Redhat" --file /tmp/tmp.${ORG}.ptable
+hammer partition-table create --name $(echo ${PTABLE_NAME} | tr '[[:lower:]' '[[:upper:]]') --os-family "Redhat" --file /tmp/tmp.${ORG}.ptable
 
 # bring templates and partition table together to operating systems
 # first we change the root passwort hash from md5 to sha512 (more secure)
@@ -83,13 +99,28 @@ do
   hammer template list | awk -F "|" "/${ORG}/ {print \$1}" | while read template_id
   do
     hammer os set-default-template --id ${RHEL_major_id} --config-template-id ${template_id}
-    hammer template update --id ${template_id} --organizations "${ORG}"
+    hammer template update --id ${template_id} --organizations "${ORG} --locations "${LOCATIONS}""
   done
 done
 
+hammer proxy list | awk -F"|" '/[[:digit:]]/ {print $1}' | while read CapsuleID
+do
+  for LOC in ${LOCATIONS}
+  do
+    hammer location add-smart-proxy --name ${LOC} --smart-proxy-id ${CapsuleID}
+    hammer environment list | awk -F"|" '$2 ~ /KT_/ {print $2}'  | sed s'/ //g' | while read ENV
+    do
+      hammer location add-environment --name ${LOC} --environment ${ENV}
+    done
+    hammer medium list | awk -F "|" '$2 ~ /Red_Hat/ {print $1}' | sed s'/ //g' | while read MEDIUM
+    do
+      hammer location add-medium --name ${LOC} --medium-id ${MEDIUM}
+    done
+  done
+done
 # update domain with organization (domain should have been created during katello-installer run)
 # search for proxy with DNS capability, if dns is used add the capsule to the domain
-hammer proxy list | awk -F "|" '/DNS/ {print $2}' | sed s'/ //' | while read Proxy
+hammer proxy list | awk -F "|" '/DNS/ {print $2}' | sed s'/ //g' | while read Proxy
 do
   if [[ -n $Proxy ]]; then
     hammer domain update --name "${DOMAIN}" --dns "${Proxy}"
@@ -97,12 +128,6 @@ do
 done
 hammer domain update --name "${DOMAIN}" --organizations "${ORG}"
 hammer domain update --name "${DOMAIN}" --locations "${LOCATION}"
-
-# create location
-for LOC in ${LOCATIONS}
-do
-  hammer location create --name "${LOC}"
-done
 
 # create subnet
 # we assume that TFTP, DHCP and DNS capability is being used from the satellite capsule server.
@@ -174,7 +199,7 @@ fi
 
 if [[ -n "$COMPUTE_PROVIDER" ]] ;then
   hammer compute-resource create \
-    --name "${COMPUTE_NAME}" \
+    --name "echo $(${COMPUTE_NAME}| tr '[[:lower:]' '[[:upper:]]') " \
     --description "${COMPUTE_DESC}" \
     --user "${COMPUTE_USER}" \
     --password "${COMPUTE_PASS}" \
@@ -193,7 +218,7 @@ hammer lifecycle-environment list --organization "${ORG}" | awk -F "|" '/[[:digi
 do
 
   #create the top level of the host group (lifecycle environment)
-  hammer hostgroup create --name ${LC_ENV}
+  hammer hostgroup create --name ${LC_ENV} --organizations "${ORG}" --locations "${LOCATIONS}"
 
     OS=$(hammer os list | awk -F '|' '/RedHat 7/ {print $2;exit}' | xargs)
     for arch in "${ARCH}"
@@ -220,6 +245,13 @@ do
           --organizations "${ORG}" \
           --locations "${LOCATIONS}"
           #--content-view "cv-os-rhel-7Server"
+
+          HgID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}[[:space:]]/ {print \$1}")
+          hammer hostgroup set-parameter \
+                --hostgroup-id ${HgID} \
+                --name "kt_activation_keys" \
+                --value="act-${LC_ENV}-os-rhel-7Server-${arch}"
+        done
       fi
 
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
@@ -246,6 +278,12 @@ do
           --puppet-ca-proxy "${PuppetProxy}" \
           --organizations "${ORG}" \
           --locations "${LOCATIONS}"
+
+          HgID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-6Server-${arch}[[:space:]]/ {print \$1}")
+          hammer hostgroup set-parameter \
+              --hostgroup-id ${HgID} \
+              --name "kt_activation_keys" \
+              --value="act-${LC_ENV}-os-rhel-6Server-${arch}"
       fi
 
     done
@@ -256,20 +294,6 @@ done
 
 # add hostgroups & activation keys for the APPS we want to deploy
 # Applications will only exist in non Library ENV
-
-declare -A RHEL7APPS
-RHEL7APPS=( ["DEV"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
-            ["QA"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
-            ["PROD"]='["Infrastructure Services"]="IdM,Git Server,Backup Server,Monitoring Server,RHEV,Docker Host,Core Build,Intranet"'\
-            ["Shop-DEV"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
-            ["Shop-QA"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
-            ["Shop-PROD"]='[Ticketshop]="Ticketmonster JEE APP,JBoss EAP,MariaDB"'\
-            ["Web-DEV"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
-            ["Web-QA"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
-            ["Web-UAT"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
-            ["Web-PROD"]='["ACME Website"]="Content,Wordpress,MariaDB"'\
-          )
-
 for STAGE in "${!RHEL7APPS[@]}"
 do
   LC_ENV=${STAGE}
@@ -319,6 +343,12 @@ do
         --locations "${LOCATIONS}"
         #--content-view
 
+        HgID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
+        hammer hostgroup set-parameter \
+        --hostgroup-id ${HgID} \
+        --name "kt_activation_keys" \
+        --value="$(echo "act-${LC_ENV}-${KEY_LABEL}-${arch}" | sed s'/ /_/g' | tr '[[:upper:]' '[[:lower:]]')"
+
         for APP in ${TOPLVLHG[$KEY]}
         do
           ParentID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}[[:space:]]/ {print \$1}")
@@ -345,6 +375,13 @@ do
           --lifecycle-environment "${LC_ENV}" \
           --organization "${ORG}"
           #--content-view
+
+          HgID=$(hammer hostgroup list --per-page 999| awk -F"|" "\$3 = /[[:space:]]${LC_ENV}\/RHEL-7Server-${arch}\/${KEY}\/${APP}[[:space:]]/ {print \$1}")
+          hammer hostgroup set-parameter \
+          --hostgroup-id ${HgID} \
+          --name "kt_activation_keys" \
+          --value="$(echo "act-${LC_ENV}-${KEY_LABEL}-${APP}-${arch}" | tr '[[:upper:]' '[[:lower:]]' | sed s'/ /_/g')"
+
         done
         IFS=$TMPIFS
       done
