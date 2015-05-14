@@ -48,6 +48,7 @@ hammer os list | awk -F "|" '/RedHat/ {print $2}' | sed s'/ //' | while read RHE
 
 # create custom ptable file to import via hammer
 cat > /tmp/tmp.${ORG}.ptable <<- EOC
+'
 <%#
 kind: ptable
 name: ptable-ACME-os-rhel-server
@@ -75,11 +76,12 @@ logvol /var --fstype ext4 --name=lv_var --vgname=vg_sys --size=2048 --fsoptions=
 logvol /var/log/ --fstype ext4 --name=lv_log --vgname=vg_sys --size=4096 --fsoptions="noatime"
 logvol /var/log/audit --fstype ext4 --name=lv_audit --vgname=vg_sys --size=256 --fsoptions="noatime"
 EOF
+'
 EOC
 
 # create acme ptable
 # http://projects.theforeman.org/projects/foreman/wiki/Dynamic_disk_partitioning
-hammer partition-table create --name $(echo ${PTABLE_NAME} | tr '[[:lower:]' '[[:upper:]]') --os-family "Redhat" --file /tmp/tmp.${ORG}.ptable
+hammer partition-table create --name $(echo ${PTABLE_NAME} | tr '[[:upper:]' '[[:lower:]]') --os-family "Redhat" --file /tmp/tmp.${ORG}.ptable
 
 # bring templates and partition table together to operating systems
 # first we change the root passwort hash from md5 to sha512 (more secure)
@@ -99,7 +101,7 @@ do
   hammer template list | awk -F "|" "/${ORG}/ {print \$1}" | while read template_id
   do
     hammer os set-default-template --id ${RHEL_major_id} --config-template-id ${template_id}
-    hammer template update --id ${template_id} --organizations "${ORG} --locations "${LOCATIONS}""
+    hammer template update --id ${template_id} --organizations "${ORG}" --locations "${LOCATIONS}"
   done
 done
 
@@ -199,7 +201,7 @@ fi
 
 if [[ -n "$COMPUTE_PROVIDER" ]] ;then
   hammer compute-resource create \
-    --name "echo $(${COMPUTE_NAME}| tr '[[:lower:]' '[[:upper:]]') " \
+    --name "${COMPUTE_NAME}" \
     --description "${COMPUTE_DESC}" \
     --user "${COMPUTE_USER}" \
     --password "${COMPUTE_PASS}" \
@@ -251,8 +253,8 @@ do
                 --hostgroup-id ${HgID} \
                 --name "kt_activation_keys" \
                 --value="act-${LC_ENV}-os-rhel-7Server-${arch}"
-        done
-      fi
+        fi
+      done
 
       if [ ${RHEL6_ENABLED} -ne 0 ]; then
 
@@ -286,7 +288,6 @@ do
               --value="act-${LC_ENV}-os-rhel-6Server-${arch}"
       fi
 
-    done
 done
 
 
