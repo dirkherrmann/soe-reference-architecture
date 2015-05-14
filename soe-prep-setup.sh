@@ -9,9 +9,9 @@ DIR="$PWD"
 source "${DIR}/common.sh"
 
 # check if exists and if yes source the config file 
-if  $(test -f '~/.soe-config' )
+if  $(test -f "$HOME/.soe-config" )
 then
-	source '~/.soe-config'
+	source "$HOME/.soe-config"
 else
 	echo "Could not find configuration file. Please copy the example file into your home directory and adapt it accordingly!"
 	echo "# cp <path to your github copy>/soe-reference-architecture/soe-config.example ~/.soe-config"
