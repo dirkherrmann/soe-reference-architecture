@@ -49,7 +49,7 @@ then
 	# TODO has to be substituted by 6.1 sat-tools channel which is not there yet
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server - RH Common RPMs x86_64 6Server' --product 'Red Hat Enterprise Linux Server'
 
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'EPEL6-x86_64-2' --product 'EPEL6-2'
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'EPEL6-APP-x86_64' --product 'EPEL6-APP'
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Bareos-RHEL6-x86_64' --product 'Bareos-Backup-RHEL6'
 
 	# TODO puppet modules which are part of core build 
@@ -67,7 +67,7 @@ hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Ser
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 # TODO has to be substituted by 6.1 sat-tools channel which is not there yet
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'EPEL7-x86_64-2' --product 'EPEL7-2'
+hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'EPEL7-APP-x86_64' --product 'EPEL7-APP'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 
 # we are creating an initial version just containing RHEL 7.0 bits based on a date filter between RHEL 7.0 GA and before RHEL 7.1 GA
