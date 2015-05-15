@@ -148,11 +148,11 @@ fi
 ###################################################################################################
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
-	hammer product create --name='EPEL6' --organization="$ORG"
-	hammer repository create --name='EPEL6-CoreBuild-x86_64' --organization="$ORG" --product='EPEL6' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/6/x86_64/
+	hammer product create --name='EPEL6-CoreBuild' --organization="$ORG"
+	hammer repository create --name='EPEL6-CoreBuild-x86_64' --organization="$ORG" --product='EPEL6-CoreBuild' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/6/x86_64/
 	hammer repository synchronize --organization "$ORG" --product "EPEL6" --async
 
-	hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7' --organization $ORG
+	hammer product update --gpg-key 'GPG-EPEL-RHEL6' --name 'EPEL6' --organization $ORG
 
 	# add it to daily sync plan
 	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL6"
