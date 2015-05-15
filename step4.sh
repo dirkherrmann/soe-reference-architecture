@@ -71,8 +71,9 @@ hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Ser
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 
 # we are creating an initial version just containing RHEL 7.0 bits based on a date filter between RHEL 7.0 GA and before RHEL 7.1 GA
-hammer content-view filter create --type erratum --name 'rhel-7.0-only' --description 'Only include RHEL 7.0 bits' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64' --content-view "cv-os-rhel-7Server"
-hammer content-view filter rule create  --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
+# TODO currently we can't update or delete the filter without UI since option list does not work. commenting the filter out until it works
+#hammer content-view filter create --type erratum --name 'rhel-7.0-only' --description 'Only include RHEL 7.0 bits' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --content-view "cv-os-rhel-7Server"
+#hammer content-view filter rule create  --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
 
 
 # TODO add all puppet modules which are part of core build based on our naming convention
@@ -81,4 +82,6 @@ hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name m
 # 2015-05-04 20:06:23 [I]   Parameters: {"id"=>"8", "description"=>"added motd puppet module", "organization_id"=>"4", "api_version"=>"v2", "content_view"=>{"id"=>"8", "description"=>"added motd puppet module"}}
 
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" --async
+
+# TODO now create a new version of cv including all erratas until today (removing the date filter created earlier)
 
