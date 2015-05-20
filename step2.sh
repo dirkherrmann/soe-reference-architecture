@@ -66,7 +66,7 @@ hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily syn
 
 ###################################################################################################
 #
-# PRODUCTS AND REPOSITORIES
+# RED HAT PRODUCTS AND REPOSITORIES
 #
 ###################################################################################################
 
@@ -75,8 +75,10 @@ hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise L
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'  
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' 
-# TODO do we need additional channels for Sat 6.1 (satellite-tools?)
+# TODO adapt it to non-beta repo after GA
 hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 7 Server) (RPMs)'
+# TODO after I've enabled and tried to sync the products have been messed up and could not be accessed anymore via UI and hammer
+hammer repository-set enable --organization $ORG --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server'
 
 # RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file
 if [ "$RHEL6_ENABLED" -eq 1 ]
@@ -86,16 +88,30 @@ then
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (RPMs)'  
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)'  
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server - Extras (RPMs)' 
+	# TODO adapt it to non-beta repo after GA
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
+	hammer repository-set enable --organization $ORG --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
   
 fi
 
 # sync all RHEL packages
 hammer product synchronize --organization $ORG --name  'Red Hat Enterprise Linux Server' --async
+hammer product synchronize --organization $ORG --name  'Red Hat Software Collections for RHEL Server' --async
 
 # set sync plan
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Enterprise Linux Server' 
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Software Collections for RHEL Server'
 
+# JBoss Enterprise Application Platform
+hammer repository-set enable --organization $ORG --product 'JBoss Enterprise Application Platform' --basearch='x86_64' --releasever='7Server' --name 'JBoss Enterprise Application Platform 6.4 (RHEL 7 Server) (RPMs)'
+hammer product synchronize --organization $ORG --name  'JBoss Enterprise Application Platform' --async
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'JBoss Enterprise Application Platform'
+
+# Satellite 6.1 Capsule
+# TODO this repo is empty as of today, we need to use the beta repo instead. check after GA if we now have content inside
+hammer repository-set enable --organization $ORG --product 'Red Hat Satellite Capsule'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)'
+hammer product synchronize --organization $ORG --name  'Red Hat Satellite Capsule' --async
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Satellite Capsule'
 
 # TODO additional repos 2 sync as defined in CONFIG section
 
