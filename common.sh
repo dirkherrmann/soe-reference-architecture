@@ -42,9 +42,6 @@ cat > $HOME/.hammer/cli_config.yml <<EOF
  :organization: $ORG
 EOF
 
-echo "$ECHO_COMMANDS" 
-
-
 if [ "$ECHO_COMMANDS" == 1 ]; then
   set -x
 fi
