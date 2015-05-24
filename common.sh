@@ -45,3 +45,21 @@ EOF
 if [ "$ECHO_COMMANDS" == 1 ]; then
   set -x
 fi
+
+# this function expects the cv name and returns the most current version id of it
+
+function get_latest_version {
+	# check if $1 is empty and if so throw an exception
+	if [ $# -ne 1 ]
+	then
+		echo 'ERROR: func get_latest_version expects only ONE param.'
+		return 1
+	fi
+
+	# get most current CV version id (thanks to mmccune)
+	CVID=$(hammer --csv content-view list --name $1 --organization ${ORG} | grep -vi '^Content View ID,' | awk -F',' '{print $1}' )
+	VID=`hammer content-view version list --content-view-id ${CVID} | awk -F'|' '{print $1}' | sort -n  | tac | head -n 1`
+	echo $VID
+	return 0
+}
+
