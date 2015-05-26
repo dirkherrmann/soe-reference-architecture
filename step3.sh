@@ -24,7 +24,7 @@ hammer lifecycle-environment create --organization "$ORG" --name "Web-UAT" --des
 hammer lifecycle-environment create --organization "$ORG" --name "Web-PROD" --description "Production" --prior "Web-UAT"
 
 # create the dedicated lifecycle env path for amce-shop
-
-hammer lifecycle-environment create --organization "$ORG" --name "Shop-DEV" --description "development" --prior "Library"
-hammer lifecycle-environment create --organization "$ORG" --name "Shop-QA" --description "Quality Assurance" --prior "Shop-DEV"
-hammer lifecycle-environment create --organization "$ORG" --name "Shop-PROD" --description "Production" --prior "Shop-QA"
+# TODO if we finally remove the shop we can remove this LC ENV path as well temporarily commented it out
+#hammer lifecycle-environment create --organization "$ORG" --name "Shop-DEV" --description "development" --prior "Library"
+#hammer lifecycle-environment create --organization "$ORG" --name "Shop-QA" --description "Quality Assurance" --prior "Shop-DEV"
+#hammer lifecycle-environment create --organization "$ORG" --name "Shop-PROD" --description "Production" --prior "Shop-QA"
