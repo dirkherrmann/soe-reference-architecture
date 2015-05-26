@@ -35,23 +35,21 @@ echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7
 # 
 ###################################################################################################
 hammer content-view create --name "cv-app-mariadb" --description "MariaDB Content View" --organization "$ORG"
-# TODO figure out how to deal with puppetforge. If enabled we create product and repo during step2.
-# but we don't want to sync the entire repo to local disk. We can not filter at the repo but only CV level.
-# I've tried using the repo discovery and URLs directly to the module. None works. 
-# As a temporary workaround we are downloading and pushing the modules directly until we made a decision.
 
-# download the example42/mariadb puppet module
-# TODO this will fail if customer has a proxy and not allows puppetforge
-#wget -O /tmp/mariadb.tgz https://forgeapi.puppetlabs.com/v3/files/example42-mariadb-2.0.16.tar.gz
-#hammer repository upload-content --organization $ORG --product $ORG --name "$ORG Puppet Repo" --path /tmp/mariadb.tgz
+# since MariaDB is included in RHEL7 (and therefore in RHEL7 Core Build) we only need to add RHSCL if we use RHEL6
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' --name "cv-app-mariadb" --product 'Red Hat Software Collections for RHEL Server'
+	hammer content-view filter create --type rpm --name 'mariadb-packages-only' --description 'Only include the MariaDB rpm packages' --inclusion=true --organization "$ORG" --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' --content-view "cv-app-mariadb"
+	hammer content-view filter rule create --name mariadb --organization "$ORG" --content-view "cv-app-mariadb" --content-view-filter 'mariadb-packages-only'
+
+fi
+
 hammer content-view puppet-module add --content-view cv-app-mariadb --name mariadb --organization $ORG
 hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
-# TODO decide if we really need the CCV or just it as a profile inside multi-tier roles (e.g. as part of ACME-Web CCV)
-# create the CCV using the RHEL7 core build
-#APP_CVID=`get_latest_version cv-app-mariadb`
-#hammer content-view create --name "ccv-infra-mariadb" --composite --description "CCV for git Infra server" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
-#hammer content-view publish --name "ccv-infra-mariadb" --organization "$ORG"
+# Note: we do not create a CCV for MariaDB as we might need for a dedicated DB server yet 
+# We are using this CV just as a profile inside role ccv-biz-acmeweb and ccv-biz-intranet 
 
 
 ###################################################################################################
@@ -67,19 +65,15 @@ hammer content-view filter rule create --name wordpress --organization "$ORG" --
 
 
 # add puppet modules from $ORG product repo to this CV
-# hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name <module_name> --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name wordpress --organization $ORG # profile specific / generic module
+# TODO do we have a separate role specific module for acmeweb - if yes we need to add it here
 
 hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
-# TODO do we want to create an all-in-one CCV for all 3 parts or two separated ones; currently I've added only wordpress
-# create the CCV using the RHEL7 core build out of newest version of all CVs inside
-APP_CVID=`get_latest_version cv-app-wordpress`
-hammer content-view create --name "ccv-biz-acmeweb" --composite --description "CCV for git Infra server" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
-hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG"
 
 ###################################################################################################
 #
-# CV git (contains RHSCL repo + Filter) and according CCV
+# CV git (contains RHSCL repo + Filter) and according CCV (user for git server AND clients)
 # 
 ###################################################################################################
 hammer content-view create --name "cv-app-git" --description "The application specific content view for git." --organization "$ORG"
@@ -89,48 +83,42 @@ hammer content-view filter create --type rpm --name 'git-packages-only' --descri
 hammer content-view filter rule create --name git19-git-all --organization "$ORG" --content-view "cv-app-git" --content-view-filter 'git-packages-only'
 
 # add puppet modules from $ORG product repo to this CV
-# TODO hammer content-view puppet-module add --content-view cv-app-git --name <module_name> --organization $ORG
+hammer content-view puppet-module add --content-view cv-app-git --name git --organization $ORG
 
 hammer content-view  publish --name "cv-app-git" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
-# create the CCV using the RHEL7 core build
-APP_CVID=`get_latest_version cv-app-git`
-hammer content-view create --name "ccv-infra-git" --composite --description "CCV for git Infra server" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
-hammer content-view publish --name "ccv-infra-git" --organization "$ORG" 
-# TODO promote it to Dev
 
 ###################################################################################################
 #
 # CV Satellite 6 Capsule
 # 
 ###################################################################################################
-hammer content-view create --name "cv-app-sat6capsule" --description "Satellite 6 Capsule Content View" --organization "$ORG"
-# TODO which repo do we need here? TODO add this repo to step2 as well
-# hammer content-view add-repository --organization "$ORG" --repository 'TODO' --name "cv-app-sat6capsule" --product 'TODO'
-# TODO RHSCL
-hammer content-view  publish --name "cv-app-sat6capsule" --organization "$ORG" --async
+hammer content-view create --name "cv-app-capsule" --description "Satellite 6 Capsule Content View" --organization "$ORG"
+# TODO check if this work, repo seems to be still empty
+hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
 
-# TODO do we need a CCV here as well?
+# Note: we do not use a puppet module here
+hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --async # no async anymore, we need to wait until its published to created the CCV
+
 
 ###################################################################################################
 #
-# CV JBoss Enterprise Application Server 7
+# CV JBoss Enterprise Application Server 7 TODO CURRENTLY NOT USED
 # 
 ###################################################################################################
-hammer content-view create --name "cv-app-jbosseap7" --description "JBoss EAP 7 Content View" --organization "$ORG"
-# TODO which repo do we need here? TODO add this repo to step2 as well
-# hammer content-view add-repository --organization "$ORG" --repository 'TODO' --name "cv-app-sat6capsule" --product 'TODO'
+#hammer content-view create --name "cv-app-jbosseap7" --description "JBoss EAP 7 Content View" --organization "$ORG"
+## TODO which repo do we need here? TODO add this repo to step2 as well
+## hammer content-view add-repository --organization "$ORG" --repository 'TODO' --name "cv-app-sat6capsule" --product 'TODO'
 
-# TODO add puppet modules from $ORG product repo to this CV
-# hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name <module_name> --organization $ORG
+## TODO add puppet modules from $ORG product repo to this CV
+## hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name <module_name> --organization $ORG
 
-hammer content-view  publish --name "cv-app-jbosseap7" --organization "$ORG" --async
+#hammer content-view  publish --name "cv-app-jbosseap7" --organization "$ORG" --async
 
-# TODO do we need a CCV here?
 
 ###################################################################################################
 #
-# CV docker-host (adds extras channel + filter)
+# CV docker host (adds extras channel + filter)
 # 
 ###################################################################################################
 hammer content-view create --name "cv-app-docker" --description "Docker Host Content View" --organization "$ORG"
@@ -141,24 +129,100 @@ hammer content-view filter rule create --name docker --organization "$ORG" --con
 # TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
 
 # add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-app-docker --name profile_dockerhost --organization $ORG
+hammer content-view puppet-module add --content-view cv-app-docker --name docker --organization $ORG
 
 # publish it and grep the task id since we need to wait until the task is finished before promoting it
-hammer content-view  publish --name "cv-app-docker" --organization "$ORG"
+hammer content-view  publish --name "cv-app-docker" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
-APP_CVID=`get_latest_version cv-app-docker`
-hammer content-view create --name "ccv-infra-docker" --composite --description "CCV for git docker compute resources" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
-hammer content-view publish --name "ccv-infra-docker" --organization "$ORG" 
+
+###################################################################################################
+#
+# CV (rsys)log host (no software since part of RHEL but just puppet)
+# 
+###################################################################################################
+hammer content-view create --name "cv-app-rsyslog" --description "Docker Host Content View" --organization "$ORG"
+# Note: we do not add software repositories in this CV since rsyslog is part of both RHEL6 and RHEL7a filter for docker rpm version here or inside the puppet module
+
+# add puppet modules from $ORG product repo to this CV
+hammer content-view puppet-module add --content-view cv-app-rsyslog --name loghost --organization $ORG
+
+# publish it and grep the task id since we need to wait until the task is finished before promoting it
+hammer content-view  publish --name "cv-app-rsyslog" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
 
 ###################################################################################################
 ###################################################################################################
 #												  #
-# COMPOSITE CONTENT VIEW PROMOTION								  #
+# COMPOSITE CONTENT VIEW CREATION (ROLES)							  #
 #												  #
 ###################################################################################################
 ###################################################################################################
 echo "Starting to promote our composite content views. This might take a while. Please be patient."
+
+
+###################################################################################################
+#
+# CCV BIZ ACMEWEB (RHEL7 Core Build + MariaDB + Wordpress)
+# 
+###################################################################################################
+APP1_CVID=`get_latest_version cv-app-mariadb`
+APP2_CVID=`get_latest_version cv-app-wordpress`
+hammer content-view create --name "ccv-biz-acmeweb" --composite --description "CCV for ACME including Wordpress and MariaDB" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP1_CVID},${APP2_CVID}
+hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it 
+
+###################################################################################################
+#
+# CCV INFRA CAPSULE (RHEL7 Core Build + SAT6 CAPSULE)
+# 
+###################################################################################################
+APP_CVID=`get_latest_version cv-app-capsule`
+hammer content-view create --name "ccv-infra-capsule" --composite --description "CCV for Satellite 6 Capsule" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
+hammer content-view publish --name "ccv-infra-capsule" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it 
+
+###################################################################################################
+#
+# CCV INFRA CONTAINERHOST (RHEL7 Core Build + DOCKER CV)
+# 
+###################################################################################################
+
+APP_CVID=`get_latest_version cv-app-docker`
+hammer content-view create --name "ccv-infra-containerhost" --composite --description "CCV for Infra Container Host" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
+hammer content-view publish --name "ccv-infra-containerhost" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it  
+
+
+###################################################################################################
+#
+# CCV INFRA GIT SERVER (RHEL7 Core Build + GIT CV)
+# 
+###################################################################################################
+
+# create the CCV using the RHEL7 core build
+APP_CVID=`get_latest_version cv-app-git`
+hammer content-view create --name "ccv-infra-gitserver" --composite --description "CCV for Infra git server" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
+hammer content-view publish --name "ccv-infra-gitserver" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it 
+
+
+
+###################################################################################################
+#
+# CCV INFRA LOGHOST (RHEL7 Core Build + RSYSLOG CV)
+# 
+###################################################################################################
+
+# create the CCV using the RHEL7 core build
+APP_CVID=`get_latest_version cv-app-rsyslog`
+hammer content-view create --name "ccv-infra-loghost" --composite --description "CCV for central log host" --organization $ORG --component-ids ${RHEL7_CB_VID},${APP_CVID}
+hammer content-view publish --name "ccv-infra-loghost" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it 
+
+
+
+###################################################################################################
+###################################################################################################
+#												  #
+# COMPOSITE CONTENT VIEW PROMOTION TO FURTHER LIFECYCLE ENVIRONMENTS				  #
+#												  #
+###################################################################################################
+###################################################################################################
 
 # get a list of all CCVs using hammer instead of hardcoded list
 # TODO test and enable the section below
