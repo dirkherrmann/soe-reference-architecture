@@ -181,7 +181,7 @@ echo "TODO"
 
 ###################################################################################################
 #
-# EPEL 7 CoreBuild (we need to divide between EPEL 6 and 7 due to different gpg keys)
+# EPEL 7 CoreBuild (we're syncing EPEL7 twice to apply different filters)
 #
 ###################################################################################################
 hammer product create --name='EPEL7-CoreBuild' --organization="$ORG"
