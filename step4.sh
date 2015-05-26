@@ -23,7 +23,7 @@ source "${DIR}/common.sh"
 # TODO create a local git repo and make it available as sync repo
 # in the meantime let's push the modules inside our example module dir directly
 # push the example puppet module into our $ORG Puppet Repo
-for module in $(ls ./puppet/*gz)
+for module in $(ls ./puppet/*/*gz)
 do
 	echo "Pushing example module $module into our puppet repo"
 	hammer -v repository upload-content --organization $ORG --product ACME --name "ACME Puppet Repo" --path $module
@@ -52,9 +52,16 @@ then
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'EPEL6-APP-x86_64' --product 'EPEL6-APP'
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Bareos-RHEL6-x86_64' --product 'Bareos-Backup-RHEL6'
 
-	# TODO puppet modules which are part of core build 
+	# puppet modules which are part of core build 
+	# Note: since all modules are RHEL major release independent we're adding the same modules as for RHEL 7 Core Build
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name adminuser --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
 
-	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" --async	
+	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
+	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
 fi
 ###################################################################################################
 #
@@ -76,12 +83,15 @@ hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Ser
 #hammer content-view filter rule create  --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
 
 
-# TODO add all puppet modules which are part of core build based on our naming convention
+# add all puppet modules which are part of core build
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
-# TODO description only available in logfile: /var/log/foreman/production.log
-# 2015-05-04 20:06:23 [I]   Parameters: {"id"=>"8", "description"=>"added motd puppet module", "organization_id"=>"4", "api_version"=>"v2", "content_view"=>{"id"=>"8", "description"=>"added motd puppet module"}}
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name adminuser --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
 
-hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" --async
+# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
+hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
 
 # TODO now create a new version of cv including all erratas until today (removing the date filter created earlier)
 
