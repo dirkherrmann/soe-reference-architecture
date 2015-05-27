@@ -59,6 +59,7 @@ then
 	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
 	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
 	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
 
 	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
@@ -90,6 +91,7 @@ hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name a
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
 
 # CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
