@@ -174,7 +174,7 @@ hammer repository create --name='Zabbix-RHEL7-x86_64' --organization="$ORG" --pr
 
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
-	hammer repository create --name='Zabbix-RHEL7-x86_64' --organization="$ORG" --product='Zabbix-Monitoring' --content-type='yum' --publish-via-http=true --url=http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/
+	hammer repository create --name='Zabbix-RHEL6-x86_64' --organization="$ORG" --product='Zabbix-Monitoring' --content-type='yum' --publish-via-http=true --url=http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/
 fi
 
 # add according GPG keys imported during step 1
