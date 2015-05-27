@@ -49,6 +49,10 @@ then
 	hammer gpg create --name 'GPG-VMware-RHEL6' --organization "$ORG" --key /tmp/vmware.key
 fi
 
+# Zabbix GPG key (both RHEL6 and RHEL7)
+wget -O /tmp/ZABBIX.key http://repo.zabbix.com/RPM-GPG-KEY-ZABBIX
+hammer gpg create --name 'GPG-ZABBIX' --organization "$ORG" --key /tmp/ZABBIX.key 
+
 # ACME custom GPG key
 # to ensure that our example rpms will work we do not create but download and use the GPG key we've created for the reference architecture
 # TODO create one and upload into github
@@ -157,41 +161,65 @@ then
 	hammer repository synchronize --organization "$ORG" --product "VMware-Tools-RHEL6" --async
 
 fi
+
 ###################################################################################################
 #
-# EPEL Repo for RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file
+# ZABBIX Repos for RHEL7 and RHEL6 (only if RHEL6_ENABLED param is set to 1 in config file)
 #
 ###################################################################################################
+
+# in this case (same GPG key used we do not need to divide between RHEL 6 and 7: one product Zabbix for both
+hammer product create --name='Zabbix-Monitoring' --organization="$ORG"
+hammer repository create --name='Zabbix-RHEL7-x86_64' --organization="$ORG" --product='Zabbix-Monitoring' --content-type='yum' --publish-via-http=true --url=http://repo.zabbix.com/zabbix/2.4/rhel/7/x86_64/
+
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
-	hammer product create --name='EPEL6-CoreBuild' --organization="$ORG"
-	hammer repository create --name='EPEL6-CoreBuild-x86_64' --organization="$ORG" --product='EPEL6-CoreBuild' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/6/x86_64/
-	hammer repository synchronize --organization "$ORG" --product "EPEL6" --async
-
-	hammer product update --gpg-key 'GPG-EPEL-RHEL6' --name 'EPEL6' --organization $ORG
-
-	# add it to daily sync plan
-	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL6"
+	hammer repository create --name='Zabbix-RHEL7-x86_64' --organization="$ORG" --product='Zabbix-Monitoring' --content-type='yum' --publish-via-http=true --url=http://repo.zabbix.com/zabbix/2.4/rhel/6/x86_64/
 fi
 
-# enable and sync OSE3 repositories
-# TODO
-echo "TODO" 
+# add according GPG keys imported during step 1
+hammer product update --gpg-key 'GPG-ZABBIX' --name 'Zabbix-Monitoring' --organization $ORG
+# add to our daily sync plan created during step 1
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "Zabbix-Monitoring"
+# run synchronization task with async option for both products
+hammer repository synchronize --organization "$ORG" --product "Zabbix-Monitoring" --async
+
+
+
+
 
 
 ###################################################################################################
 #
-# EPEL 7 CoreBuild (we're syncing EPEL7 twice to apply different filters)
+# EPEL Repo for RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file == DEPRECATED DUE TO ZABBIX ==
 #
 ###################################################################################################
-hammer product create --name='EPEL7-CoreBuild' --organization="$ORG"
-# it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
-# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
-hammer repository create --name='EPEL7-CoreBuild-x86_64' --organization="$ORG" --product='EPEL7-CoreBuild' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/7/x86_64/
-hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7-CoreBuild' --organization $ORG
+#if [ "$RHEL6_ENABLED" -eq 1 ]
+#then
+#	hammer product create --name='EPEL6-CoreBuild' --organization="$ORG"
+#	hammer repository create --name='EPEL6-CoreBuild-x86_64' --organization="$ORG" --product='EPEL6-CoreBuild' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/6/x86_64/
+#	hammer repository synchronize --organization "$ORG" --product "EPEL6" --async
 
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7"
-hammer repository synchronize --organization "$ORG" --product "EPEL7-CoreBuild" --async
+#	hammer product update --gpg-key 'GPG-EPEL-RHEL6' --name 'EPEL6' --organization $ORG
+
+#	# add it to daily sync plan
+#	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL6"
+#fi
+
+
+###################################################################################################
+#
+# EPEL 7 CoreBuild (we're syncing EPEL7 twice to apply different filters) == DEPRECATED DUE TO ZABBIX ==
+#
+###################################################################################################
+#hammer product create --name='EPEL7-CoreBuild' --organization="$ORG"
+## it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
+## hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
+#hammer repository create --name='EPEL7-CoreBuild-x86_64' --organization="$ORG" --product='EPEL7-CoreBuild' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/7/x86_64/
+#hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7-CoreBuild' --organization $ORG
+
+#hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7"
+#hammer repository synchronize --organization "$ORG" --product "EPEL7-CoreBuild" --async
 
 
 ###################################################################################################
