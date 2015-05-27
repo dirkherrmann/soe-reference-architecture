@@ -24,3 +24,4 @@ fi
 # note: has worked for me only at the second try, so maybe we should check if successful before proceeding:
 hammer subscription list --organization "$ORG" | ( grep -q 'Red Hat' && echo ok ) || ( echo "Subscription import has not been successful. Exit"; exit 1 )
 
+# TODO Ben: Compute Resources here from old step6.sh / now step7.sh
