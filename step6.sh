@@ -66,7 +66,7 @@ hammer content-view filter rule create --name wordpress --organization "$ORG" --
 
 # add puppet modules from $ORG product repo to this CV
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name wordpress --organization $ORG # profile specific / generic module
-# TODO do we have a separate role specific module for acmeweb - if yes we need to add it here
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name acmeweb --organization $ORG # role specific module for acmeweb
 
 hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
