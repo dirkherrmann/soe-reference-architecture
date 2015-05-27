@@ -229,9 +229,9 @@ hammer repository synchronize --organization "$ORG" --product "Zabbix-Monitoring
 ###################################################################################################
 hammer product create --name='EPEL7-APP' --organization="$ORG"
 # it seems that Sat6 can not handle the mirroring of EPEL repo. if it does not work use a static mirror from http://mirrors.fedoraproject.org/publiclist/EPEL/7/x86_64/ instead,like
-# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7-2' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
+# hammer repository create --name='EPEL7-x86_64' --organization="$ORG" --product='EPEL7-APP' --content-type='yum' --publish-via-http=true --url= http://ftp-stud.hs-esslingen.de/pub/epel/7/x86_64/
 hammer repository create --name='EPEL7-APP-x86_64' --organization="$ORG" --product='EPEL7-APP' --content-type='yum' --publish-via-http=true --url=http://ftp.tu-chemnitz.de/pub/linux/fedora-epel/7/x86_64/
-hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7-2' --organization $ORG
+hammer product update --gpg-key 'GPG-EPEL-RHEL7' --name 'EPEL7-APP' --organization $ORG
 
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "EPEL7-APP"
 hammer repository synchronize --organization "$ORG" --product "EPEL7-APP" --async

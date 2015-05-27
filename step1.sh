@@ -8,7 +8,11 @@ DIR="$PWD"
 source "${DIR}/common.sh"
 
 # check if organization already exists. if yes, exit
-hammer organization info --name "$ORG" >/dev/null 2>&1 && echo "Organization $ORG already exists. Exit."; exit 1
+hammer organization info --name "$ORG" >/dev/null 2>&1 
+if $? -ne 0; then  
+  echo "Organization $ORG already exists. Exit."
+  exit 1
+fi
 
 # create org
 hammer organization create --name "$ORG" --label "$ORG_LABEL" --description "$ORG_DESCRIPTION"
