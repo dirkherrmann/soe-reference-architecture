@@ -12,11 +12,6 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
-# TODO DOCUMENTATION: now the CCV creation works. Maybe a little bit misleading is the component IDs you need to provide are *NOT* the *CV* IDs but their *VERSION IDS*
-# I will document it inside the ref arch especially in step9 where I'm playing around with CCV lifecycle topics
-
-# TODO check if create a function in common.sh with param cv-name and getting back the highest version ID
-
 # since we need our core build CV IDs more than once let's use variables for them
 # note: we don't need to CV IDs but the VERSION IDs of most current versions for our CCV creation
 if [ "$RHEL6_ENABLED" -eq 1 ]
@@ -25,9 +20,14 @@ then
 	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build"
 fi
 
-export RHEL7_CB_VID=`get_latest_version cv-os-rhel-6Server`
-echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
-
+# check if this variable is empty and exit if
+if [ -z ${RHEL7_CB_VID} ]
+then 
+	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
+else 
+	export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
+	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
+fi
 
 ###################################################################################################
 #
@@ -59,8 +59,8 @@ hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" # --a
 ###################################################################################################
 hammer content-view create --name "cv-app-wordpress" --description "Wordpress Content View" --organization "$ORG"
 # TODO add puppet repo and modules as well
-hammer content-view add-repository --organization "$ORG" --repository 'EPEL7-x86_64' --name "cv-app-wordpress" --product 'EPEL7'
-hammer content-view filter create --type rpm --name 'wordpress-packages-only' --description 'Only include the wordpress rpm package' --inclusion=true --organization "$ORG" --repositories 'EPEL7-x86_64' --content-view "cv-app-wordpress"
+hammer content-view add-repository --organization "$ORG" --repository 'EPEL7-APP-x86_64' --name "cv-app-wordpress" --product 'EPEL7-APP'
+hammer content-view filter create --type rpm --name 'wordpress-packages-only' --description 'Only include the wordpress rpm package' --inclusion=true --organization "$ORG" --repositories 'EPEL7-APP-x86_64' --content-view "cv-app-wordpress"
 hammer content-view filter rule create --name wordpress --organization "$ORG" --content-view "cv-app-wordpress" --content-view-filter 'wordpress-packages-only'
 
 
@@ -96,7 +96,7 @@ hammer content-view  publish --name "cv-app-git" --organization "$ORG" # --async
 ###################################################################################################
 hammer content-view create --name "cv-app-capsule" --description "Satellite 6 Capsule Content View" --organization "$ORG"
 # TODO check if this work, repo seems to be still empty
-hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
+hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 for RHEL 7 Server RPMs x86_64 7Server' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
 
 # Note: we do not use a puppet module here
 hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --async # no async anymore, we need to wait until its published to created the CCV
@@ -124,8 +124,8 @@ hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --
 ###################################################################################################
 hammer content-view create --name "cv-app-docker" --description "Docker Host Content View" --organization "$ORG"
 # TODO add puppet repo and modules as well
-hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' --name "cv-app-docker" --product 'Red Hat Enterprise Linux Server'
-hammer content-view filter create --type rpm --name 'docker-package-only' --description 'Only include the docker rpm package' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' --content-view "cv-app-docker"
+hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' --name "cv-app-docker" --product 'Red Hat Enterprise Linux Server'
+hammer content-view filter create --type rpm --name 'docker-package-only' --description 'Only include the docker rpm package' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' --content-view "cv-app-docker"
 hammer content-view filter rule create --name docker --organization "$ORG" --content-view "cv-app-docker" --content-view-filter 'docker-package-only'
 # TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
 
