@@ -12,21 +12,22 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
+# check if this variable is empty and exit if
+export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
+if [ -z ${RHEL7_CB_VID} ]
+then 
+	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
+else 
+
+	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
+fi
+
 # since we need our core build CV IDs more than once let's use variables for them
 # note: we don't need to CV IDs but the VERSION IDs of most current versions for our CCV creation
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	export RHEL6_CB_VID=`get_latest_version cv-os-rhel-6Server`
 	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build"
-fi
-
-# check if this variable is empty and exit if
-if [ -z ${RHEL7_CB_VID} ]
-then 
-	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
-else 
-	export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
-	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
 fi
 
 ###################################################################################################
@@ -65,8 +66,8 @@ hammer content-view filter rule create --name wordpress --organization "$ORG" --
 
 
 # add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name wordpress --organization $ORG # profile specific / generic module
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name acmeweb --organization $ORG # role specific module for acmeweb
+hammer content-view puppet-module add --content-view "cv-app-wordpress" --name wordpress --organization $ORG # profile specific / generic module
+hammer content-view puppet-module add --content-view "cv-app-wordpress" --name acmeweb --organization $ORG # role specific module for acmeweb
 
 hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
@@ -95,8 +96,12 @@ hammer content-view  publish --name "cv-app-git" --organization "$ORG" # --async
 # 
 ###################################################################################################
 hammer content-view create --name "cv-app-capsule" --description "Satellite 6 Capsule Content View" --organization "$ORG"
-# TODO check if this work, repo seems to be still empty
-hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 for RHEL 7 Server RPMs x86_64 7Server' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
+
+echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. POST GA please change this inside step6.sh to the final repository.\n\n\n"
+
+hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6 Beta for RHEL 7 Server RPMs x86_64' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule Beta'
+# POST GA PLEASE COMMENT OUT THE 1 LINE ABOVE AND UNCOMMENT THE 1 LINE BELOW
+#hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 for RHEL 7 Server RPMs x86_64 7Server' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
 
 # Note: we do not use a puppet module here
 hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --async # no async anymore, we need to wait until its published to created the CCV
@@ -123,7 +128,7 @@ hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --
 # 
 ###################################################################################################
 hammer content-view create --name "cv-app-docker" --description "Docker Host Content View" --organization "$ORG"
-# TODO add puppet repo and modules as well
+
 hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' --name "cv-app-docker" --product 'Red Hat Enterprise Linux Server'
 hammer content-view filter create --type rpm --name 'docker-package-only' --description 'Only include the docker rpm package' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' --content-view "cv-app-docker"
 hammer content-view filter rule create --name docker --organization "$ORG" --content-view "cv-app-docker" --content-view-filter 'docker-package-only'
@@ -143,9 +148,8 @@ hammer content-view  publish --name "cv-app-docker" --organization "$ORG" # --as
 ###################################################################################################
 hammer content-view create --name "cv-app-rsyslog" --description "Docker Host Content View" --organization "$ORG"
 # Note: we do not add software repositories in this CV since rsyslog is part of both RHEL6 and RHEL7a filter for docker rpm version here or inside the puppet module
-
-# add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-app-rsyslog --name loghost --organization $ORG
+# Note: the only puppet module we need is the loghost module which contains server and client specific classes similar to git module.
+# Since it is already part of the core build content view we MUST NOT add it here other we can create this CV but not the CCV of both CVs.
 
 # publish it and grep the task id since we need to wait until the task is finished before promoting it
 hammer content-view  publish --name "cv-app-rsyslog" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV

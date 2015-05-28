@@ -112,10 +112,18 @@ hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $
 #hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'JBoss Enterprise Application Platform'
 
 # Satellite 6.1 Capsule
+
+# this is the Satellite 6.1 pre-GA (Beta)repo
+echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. POST GA please change this inside step3.sh to the final repository.\n\n\n"
+hammer repository-set enable --organization $ORG --product 'Red Hat Satellite Capsule Beta'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6 Beta (for RHEL 7 Server) (RPMs)'
+hammer product synchronize --organization $ORG --name  'Red Hat Satellite Capsule Beta' --async
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Satellite Capsule Beta'
+
 # TODO this repo is empty as of today, we need to use the beta repo instead. check after GA if we now have content inside
-hammer repository-set enable --organization $ORG --product 'Red Hat Satellite Capsule'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)'
-hammer product synchronize --organization $ORG --name  'Red Hat Satellite Capsule' --async
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Satellite Capsule'
+# POST GA PLEASE COMMENT OUT THE 3 LINES ABOVE AND UNCOMMENT THE 3 LINES BELOW
+#hammer repository-set enable --organization $ORG --product 'Red Hat Satellite Capsule'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)'
+#hammer product synchronize --organization $ORG --name  'Red Hat Satellite Capsule' --async
+#hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Satellite Capsule'
 
 # TODO additional repos 2 sync as defined in CONFIG section
 
