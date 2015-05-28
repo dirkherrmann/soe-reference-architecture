@@ -25,7 +25,7 @@ then
 	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build"
 fi
 
-export RHEL7_CB_VID=`get_latest_version cv-os-rhel-6Server`
+export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
 echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
 
 
@@ -59,8 +59,8 @@ hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" # --a
 ###################################################################################################
 hammer content-view create --name "cv-app-wordpress" --description "Wordpress Content View" --organization "$ORG"
 # TODO add puppet repo and modules as well
-hammer content-view add-repository --organization "$ORG" --repository 'EPEL7-x86_64' --name "cv-app-wordpress" --product 'EPEL7'
-hammer content-view filter create --type rpm --name 'wordpress-packages-only' --description 'Only include the wordpress rpm package' --inclusion=true --organization "$ORG" --repositories 'EPEL7-x86_64' --content-view "cv-app-wordpress"
+hammer content-view add-repository --organization "$ORG" --repository 'EPEL7-APP-x86_64' --name "cv-app-wordpress" --product 'EPEL7-APP'
+hammer content-view filter create --type rpm --name 'wordpress-packages-only' --description 'Only include the wordpress rpm package' --inclusion=true --organization "$ORG" --repositories 'EPEL7-APP-x86_64' --content-view "cv-app-wordpress"
 hammer content-view filter rule create --name wordpress --organization "$ORG" --content-view "cv-app-wordpress" --content-view-filter 'wordpress-packages-only'
 
 
