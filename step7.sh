@@ -192,26 +192,6 @@ done
 
 # activation keys are create during host group creation
 
-# create compute resource
-if [[ -n "${COMPUTE_PROVIDER}" ]] && [[ "${COMPUTE_PROVIDER}" = "Ovirt" ]]
-then
-  COMPUTE_PROV="RHEV"
-  COMPUTE_NAME="${COMPUTE_PROV}-${ORG}-${COMPUTE_LOCATION}"
-fi
-
-if [[ -n "$COMPUTE_PROVIDER" ]] ;then
-  hammer compute-resource create \
-    --name "${COMPUTE_NAME}" \
-    --description "${COMPUTE_DESC}" \
-    --user "${COMPUTE_USER}" \
-    --password "${COMPUTE_PASS}" \
-    --url "${COMPUTE_URL}" \
-    --provider "${COMPUTE_PROVIDER}" \
-    --organizations "${ORG}" \
-    --locations "${LOCATIONS}"
-    # --uuid  #needed to provide the Datacenter to be used, but name is not sufficient for now
-fi
-
 # create host groups
 #create the second level of the host group (RHEL Core Build)
 PuppetProxy=$(hammer proxy list | awk -F "|" '/Puppe/ {print $2;exit}' | xargs)
