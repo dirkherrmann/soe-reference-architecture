@@ -79,11 +79,12 @@ hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" # -
 hammer content-view create --name "cv-app-git" --description "The application specific content view for git." --organization "$ORG"
 # add the RHSCL repo plus filter for git packages only
 hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' --name "cv-app-git" --product 'Red Hat Software Collections for RHEL Server'
-hammer content-view filter create --type rpm --name 'git-packages-only' --description 'Only include the git rpm packages' --inclusion=true --organization "$ORG" --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' --content-view "cv-app-wordpress"
-hammer content-view filter rule create --name git19-git-all --organization "$ORG" --content-view "cv-app-git" --content-view-filter 'git-packages-only'
+
+hammer content-view filter create --type rpm --name 'git-packages-only' --description 'Only include the git rpm packages' --inclusion=true --organization "$ORG" --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' --content-view "cv-app-git"
+hammer content-view filter rule create --name 'git19-*' --organization "$ORG" --content-view "cv-app-git" --content-view-filter 'git-packages-only'
 
 # add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-app-git --name git --organization $ORG
+hammer content-view puppet-module add --content-view "cv-app-git" --name git --organization $ORG
 
 hammer content-view  publish --name "cv-app-git" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
 
@@ -129,7 +130,7 @@ hammer content-view filter rule create --name docker --organization "$ORG" --con
 # TODO let's try the latest version (no version filter). If we figure out that it does not work add a filter for docker rpm version here or inside the puppet module
 
 # add puppet modules from $ORG product repo to this CV
-hammer content-view puppet-module add --content-view cv-app-docker --name docker --organization $ORG
+hammer content-view puppet-module add --content-view "cv-app-docker" --name docker --organization $ORG
 
 # publish it and grep the task id since we need to wait until the task is finished before promoting it
 hammer content-view  publish --name "cv-app-docker" --organization "$ORG" # --async # no async anymore, we need to wait until its published to created the CCV
