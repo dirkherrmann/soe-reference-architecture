@@ -106,10 +106,10 @@ hammer product synchronize --organization $ORG --name  'Red Hat Software Collect
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Enterprise Linux Server' 
 hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'Red Hat Software Collections for RHEL Server'
 
-# JBoss Enterprise Application Platform
-hammer repository-set enable --organization $ORG --product 'JBoss Enterprise Application Platform' --basearch='x86_64' --releasever='7Server' --name 'JBoss Enterprise Application Platform 6.4 (RHEL 7 Server) (RPMs)'
-hammer product synchronize --organization $ORG --name  'JBoss Enterprise Application Platform' --async
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'JBoss Enterprise Application Platform'
+# JBoss Enterprise Application Platform - DISABLED TEMPORARY SINCE WE DO NOT USE IT HERE
+#hammer repository-set enable --organization $ORG --product 'JBoss Enterprise Application Platform' --basearch='x86_64' --releasever='7Server' --name 'JBoss Enterprise Application Platform 6.4 (RHEL 7 Server) (RPMs)'
+#hammer product synchronize --organization $ORG --name  'JBoss Enterprise Application Platform' --async
+#hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  'JBoss Enterprise Application Platform'
 
 # Satellite 6.1 Capsule
 # TODO this repo is empty as of today, we need to use the beta repo instead. check after GA if we now have content inside
