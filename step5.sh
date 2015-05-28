@@ -54,13 +54,13 @@ then
 
 	# puppet modules which are part of core build 
 	# Note: since all modules are RHEL major release independent we're adding the same modules as for RHEL 7 Core Build
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name adminuser --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name motd --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name adminuser --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name language --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name ntp --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name timezone --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name loghost --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name zabbix --organization $ORG
 
 	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
