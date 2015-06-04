@@ -97,6 +97,8 @@ hammer content-view  publish --name "cv-app-git" --organization "$ORG" # --async
 ###################################################################################################
 hammer content-view create --name "cv-app-capsule" --description "Satellite 6 Capsule Content View" --organization "$ORG"
 
+hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' --name "cv-app-capsule" --product 'Red Hat Software Collections for RHEL Server'
+
 echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. POST GA please change this inside step6.sh to the final repository.\n\n\n"
 
 hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6 Beta for RHEL 7 Server RPMs x86_64' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule Beta'
@@ -114,10 +116,10 @@ hammer content-view  publish --name "cv-app-capsule" --organization "$ORG"  # --
 ###################################################################################################
 #hammer content-view create --name "cv-app-jbosseap7" --description "JBoss EAP 7 Content View" --organization "$ORG"
 ## TODO which repo do we need here? TODO add this repo to step2 as well
-## hammer content-view add-repository --organization "$ORG" --repository 'TODO' --name "cv-app-sat6capsule" --product 'TODO'
+## hammer content-view add-repository --organization "$ORG" --repository 'JBoss Enterprise Application Platform 6.4 RHEL 7 Server RPMs x86_64 7Server' --name "cv-app-jbosseap7" --product 'JBoss Enterprise Application Platform'
 
 ## TODO add puppet modules from $ORG product repo to this CV
-## hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name <module_name> --organization $ORG
+## hammer content-view puppet-module add --content-view cv-app-jbosseap7 --name jboss_admin --organization $ORG
 
 #hammer content-view  publish --name "cv-app-jbosseap7" --organization "$ORG" --async
 
