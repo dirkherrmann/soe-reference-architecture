@@ -169,6 +169,23 @@ echo "Starting to promote our composite content views. This might take a while. 
 
 ###################################################################################################
 #
+# CCV CORE BUILD (RHEL7 Core Build + RHEL6 Core Build if RHEL6 enabled)
+# 
+###################################################################################################
+
+# 
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	hammer content-view create --name "ccv-infra-corebuild" --composite --description "CCV for different core build versions" --organization $ORG --component-ids ${RHEL7_CB_VID},${RHEL6_CB_VID}
+else
+	hammer content-view create --name "ccv-infra-corebuild" --composite --description "CCV for different core build versions" --organization $ORG --component-ids ${RHEL7_CB_VID}
+fi
+
+hammer content-view publish --name "ccv-infra-corebuild" --organization "$ORG" # --async # no async anymore, we need to wait until its published to promote it 
+
+
+###################################################################################################
+#
 # CCV BIZ ACMEWEB (RHEL7 Core Build + MariaDB + Wordpress)
 # 
 ###################################################################################################
