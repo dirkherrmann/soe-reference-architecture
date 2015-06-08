@@ -62,13 +62,11 @@ then
 
 	# puppet modules which are part of core build 
 	# Note: since all modules are RHEL major release independent we're adding the same modules as for RHEL 7 Core Build
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name motd --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name adminuser --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name language --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name ntp --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name timezone --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name loghost --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name zabbix --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name corebuildpackages --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
 
 	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
@@ -101,10 +99,8 @@ hammer content-view filter rule create --name 'emacs*' --organization "$ORG" --c
 
 # add all puppet modules which are part of core build
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name adminuser --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name language --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name timezone --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name corebuildpackages --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
 
@@ -112,4 +108,33 @@ hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name z
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
 
 # TODO now create a new version of cv including all erratas until today (removing the date filter created earlier)
+
+
+# promote core build CVs from Library to DEV, QA, PROD
+export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
+export RHEL7_CVID=$(hammer --csv content-view list --name cv-os-rhel-7Server --organization ${ORG} | grep -vi '^Content View ID,' | awk -F',' '{print $1}' )
+
+if [ -z ${RHEL7_CB_VID} ]
+then 
+	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
+else 
+
+	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build. Promoting it now to DEV, QA and PROD"
+	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment DEV --id $RHEL7_CB_VID
+	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment QA --id $RHEL7_CB_VID
+	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment PROD --id $RHEL7_CB_VID 
+fi
+
+# since we need our core build CV IDs more than once let's use variables for them
+# note: we don't need to CV IDs but the VERSION IDs of most current versions for our CCV creation
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	export RHEL6_CB_VID=`get_latest_version cv-os-rhel-6Server`
+	export RHEL6_CVID=$(hammer --csv content-view list --name cv-os-rhel-6Server --organization ${ORG} | grep -vi '^Content View ID,' | awk -F',' '{print $1}' )
+	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build. Promoting it now to DEV, QA and PROD"
+	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment DEV --id $RHEL6_CB_VID
+	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment QA --id $RHEL6_CB_VID
+	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment PROD --id $RHEL6_CB_VID 
+fi
+
 
