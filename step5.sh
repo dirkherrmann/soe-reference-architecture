@@ -46,8 +46,6 @@ then
 	# software repositories
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server Kickstart x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
 	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server RPMs x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
-	# TODO check if still required or covered by sat6-tools repo 
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server - RH Common RPMs x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
 
 	# TODO  Red Hat Satellite Tools 6 Beta for RHEL 7 Server RPMs x86_64 7Server 
 
@@ -81,7 +79,7 @@ hammer content-view create --name "cv-os-rhel-7Server" --description "RHEL Serve
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 # TODO has to be substituted by 6.1 sat-tools channel which is not there yet
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
+#hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Zabbix-RHEL7-x86_64' --product 'Zabbix-Monitoring'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 
