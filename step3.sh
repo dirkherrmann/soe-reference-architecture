@@ -97,6 +97,9 @@ then
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
 	hammer repository-set enable --organization $ORG --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
 
+	# if we are using RHEV we need the RHEV agents in the dedicated channel for RHEL6 while RHEL7 includes in RH Common
+	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server (RPMs)'
+
 #	# RHEL 6 latest
 #	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (Kickstart)'  
 #	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Enterprise Linux 6 Server (RPMs)'  
@@ -105,6 +108,7 @@ then
 #	# TODO adapt it to non-beta repo after GA
 #	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
 #	hammer repository-set enable --organization $ORG --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
+#	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server (RPMs)'
   
 fi
 
@@ -173,7 +177,7 @@ if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	hammer product create --name='VMware-Tools-RHEL6' --organization="$ORG"
 	# TODO add VMware vSphere version or repo to config file
-	hammer repository create --name='VMware-Tools-RHEL6-x86_64' --organization="$ORG" --product='VMware-Tools-RHEL6' --content-type='yum' --publish-via-http=true --url='https://packages.vmware.com/tools/esx/5.1u2/rhel6/x86_64/'
+	hammer repository create --name='VMware-Tools-RHEL6-x86_64' --organization="$ORG" --product='VMware-Tools-RHEL6' --content-type='yum' --publish-via-http=true --url='http://packages.vmware.com/tools/esx/5.1u2/rhel6/x86_64/'
 	hammer product update --gpg-key 'GPG-VMware-RHEL6' --name 'VMware-Tools-RHEL6' --organization $ORG
 	hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  "VMware-Tools-RHEL6"
 	hammer repository synchronize --organization "$ORG" --product "VMware-Tools-RHEL6" --async

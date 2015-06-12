@@ -58,13 +58,19 @@ then
 	hammer content-view filter create --type rpm --name 'excluding-emacs' --description 'Excluding emacs package' --inclusion=false --organization "$ORG" --repository-ids ${REPOID} --content-view "cv-os-rhel-6Server"
 	hammer content-view filter rule create --name 'emacs*' --organization "$ORG" --content-view "cv-os-rhel-6Server" --content-view-filter 'excluding-emacs'
 
+	# add vmware tools and rhev agent repos
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'VMware-Tools-RHEL6-x86_64' --product 'VMware-Tools-RHEL6'
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server RPMs x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
+
 	# puppet modules which are part of core build 
 	# Note: since all modules are RHEL major release independent we're adding the same modules as for RHEL 7 Core Build
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name corebuildpackages --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name motd --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name ntp --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name corebuildpackages --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name loghost --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name zabbix --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name vmwaretools --organization $ORG
+	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name rhevagent --organization $ORG
 
 	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
@@ -79,7 +85,7 @@ hammer content-view create --name "cv-os-rhel-7Server" --description "RHEL Serve
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 # TODO has to be substituted by 6.1 sat-tools channel which is not there yet
-#hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
+hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Zabbix-RHEL7-x86_64' --product 'Zabbix-Monitoring'
 hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
 
@@ -101,6 +107,9 @@ hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name n
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name corebuildpackages --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
 hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name vmwaretools --organization $ORG
+hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name rhevagent --organization $ORG
+	
 
 # CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
