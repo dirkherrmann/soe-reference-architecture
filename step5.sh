@@ -11,30 +11,6 @@
 DIR="$PWD"
 source "${DIR}/common.sh"
 
-
-###################################################################################################
-#
-# EXAMPLE PUPPET MODULES PUSH 
-#
-###################################################################################################
-# we need to push our pre-built puppet modules into git and enable the repo sync
-# TODO double-check if this is the right chapter for this task
-
-# TODO create a local git repo and make it available as sync repo
-# in the meantime let's push the modules inside our example module dir directly
-# push the example puppet module into our $ORG Puppet Repo
-for module in $(ls ./puppet/*/*gz)
-do
-	echo "Pushing example module $module into our puppet repo"
-	hammer -v repository upload-content --organization $ORG --product ACME --name "ACME Puppet Repo" --path $module
-done
-
-# the following lines are the bash work-around for pulp-puppet-module-builder
-#for file in $@
-#do
-#    echo $file,`sha256sum $file | awk '{ print $1 }'`,`stat -c '%s' $file`
-#done
-
 ###################################################################################################
 #
 # RHEL 6 Core Build Content View
@@ -42,58 +18,125 @@ done
 ###################################################################################################
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
-	hammer content-view create --name "cv-os-rhel-6Server" --description "RHEL Server 6 Core Build Content View" --organization "$ORG"
+	hammer content-view create --name "cv-os-rhel-6Server" \
+	   --description "RHEL Server 6 Core Build Content View" \
+	   --organization "$ORG"
+
 	# software repositories
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server Kickstart x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Linux 6 Server RPMs x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
+	hammer content-view add-repository --organization "$ORG" \
+	   --name "cv-os-rhel-6Server" \
+	   --repository 'Red Hat Enterprise Linux 6 Server Kickstart x86_64 6.5' \
+	   --product 'Red Hat Enterprise Linux Server'
 
-	# TODO  Red Hat Satellite Tools 6 Beta for RHEL 7 Server RPMs x86_64 7Server 
+	hammer content-view add-repository \
+	   --organization "$ORG" \
+	   --name "cv-os-rhel-6Server" \
+	   --repository 'Red Hat Enterprise Linux 6 Server RPMs x86_64 6.5' \
+	   --product 'Red Hat Enterprise Linux Server'
 
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Zabbix-RHEL6-x86_64' --product 'Zabbix-Monitoring'
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Bareos-RHEL6-x86_64' --product 'Bareos-Backup-RHEL6'
+	# there is an inconsistency here between RHEL7 and RHEL6: RHEL6 repo name without 6Server at the end 
+	hammer content-view add-repository --organization "$ORG" \
+	   --name "cv-os-rhel-6Server" \
+	   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 6 Server RPMs x86_64' \
+	   --product 'Red Hat Enterprise Linux Server'
+
+	hammer content-view add-repository --organization "$ORG" \
+	   --name "cv-os-rhel-6Server" \
+	   --repository 'Zabbix-RHEL6-x86_64' \
+	   --product 'Zabbix-Monitoring'
+
+	hammer content-view add-repository --organization "$ORG" \
+	   --name "cv-os-rhel-6Server" \
+	   --repository 'Bareos-RHEL6-x86_64' \
+	   --product 'Bareos-Backup-RHEL6'
 
 	# exclude filter example using emacs package
-	# due to https://bugzilla.redhat.com/show_bug.cgi?id=1228890 you need to provide repository ID instead of name otherwise the filter applies to all repos 
-	REPOID=$(hammer --csv repository list --name 'Red Hat Enterprise Linux 6 Server RPMs x86_64 6.5' --organization $ORG | grep -vi '^ID' | awk -F',' '{print $1}')
-	hammer content-view filter create --type rpm --name 'excluding-emacs' --description 'Excluding emacs package' --inclusion=false --organization "$ORG" --repository-ids ${REPOID} --content-view "cv-os-rhel-6Server"
-	hammer content-view filter rule create --name 'emacs*' --organization "$ORG" --content-view "cv-os-rhel-6Server" --content-view-filter 'excluding-emacs'
+	# due to https://bugzilla.redhat.com/show_bug.cgi?id=1228890 you need to provide
+	# repository ID instead of name otherwise the filter applies to all repos 
+	REPOID=$(hammer --csv repository list --name 'Red Hat Enterprise Linux 6 Server RPMs x86_64 6.5' \
+	   --organization $ORG | grep -vi '^ID' | awk -F',' '{print $1}')
+
+	hammer content-view filter create --type rpm \
+	   --name 'excluding-emacs' --description 'Excluding emacs package' \
+	   --inclusion=false --organization "$ORG" --repository-ids ${REPOID} \
+	   --content-view "cv-os-rhel-6Server"
+
+	hammer content-view filter rule create --name 'emacs*' --organization "$ORG" \
+	   --content-view "cv-os-rhel-6Server" --content-view-filter 'excluding-emacs'
 
 	# add vmware tools and rhev agent repos
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'VMware-Tools-RHEL6-x86_64' --product 'VMware-Tools-RHEL6'
-	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" --repository 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server RPMs x86_64 6.5' --product 'Red Hat Enterprise Linux Server'
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" \
+	   --repository 'VMware-Tools-RHEL6-x86_64' --product 'VMware-Tools-RHEL6'
+
+	hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-6Server" \
+	   --repository 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server RPMs x86_64 6.5' \
+	   --product 'Red Hat Enterprise Linux Server'
 
 	# puppet modules which are part of core build 
 	# Note: since all modules are RHEL major release independent we're adding the same modules as for RHEL 7 Core Build
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name motd --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name ntp --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name corebuildpackages --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name loghost --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name zabbix --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name vmwaretools --organization $ORG
-	hammer content-view puppet-module add --content-view cv-os-rhel-6Server --name rhevagent --organization $ORG
+	for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 'rhevagent'
+	do
+		hammer content-view puppet-module add --name ${module} \
+		   --content-view cv-os-rhel-7Server \
+		   --organization $ORG
+	done
 
 	# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
-	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" #--async	
+	hammer content-view  publish --name "cv-os-rhel-6Server" --organization "$ORG" 	
 fi
 ###################################################################################################
 #
 # RHEL7 Core Build Content View
 #
 ###################################################################################################
-hammer content-view create --name "cv-os-rhel-7Server" --description "RHEL Server 7 Core Build Content View" --organization "$ORG"
+hammer content-view create --name "cv-os-rhel-7Server" \
+   --description "RHEL Server 7 Core Build Content View" --organization "$ORG"
+
 # software repositories
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
-# TODO has to be substituted by 6.1 sat-tools channel which is not there yet
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' --product 'Red Hat Enterprise Linux Server'
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Zabbix-RHEL7-x86_64' --product 'Zabbix-Monitoring'
-hammer content-view add-repository --organization "$ORG" --name "cv-os-rhel-7Server" --repository 'Bareos-RHEL7-x86_64' --product 'Bareos-Backup-RHEL7'
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Red Hat Enterprise Linux 7 Server Kickstart x86_64 7Server' \
+   --product 'Red Hat Enterprise Linux Server'
+
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' \
+   --product 'Red Hat Enterprise Linux Server'
+
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 7 Server RPMs x86_64 7Server' \
+   --product 'Red Hat Enterprise Linux Server'
+
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' \
+   --product 'Red Hat Enterprise Linux Server'
+
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Zabbix-RHEL7-x86_64' \
+   --product 'Zabbix-Monitoring'
+
+hammer content-view add-repository --organization "$ORG" \
+   --name "cv-os-rhel-7Server" \
+   --repository 'Bareos-RHEL7-x86_64' \
+   --product 'Bareos-Backup-RHEL7'
 
 # exclude filter example using emacs package
-# due to https://bugzilla.redhat.com/show_bug.cgi?id=1228890 you need to provide repository ID instead of name otherwise the filter applies to all repos 
-REPOID=$(hammer --csv repository list --name 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --organization $ORG | grep -vi '^ID' | awk -F',' '{print $1}')
-hammer content-view filter create --type rpm --name 'excluding-emacs' --description 'Excluding emacs package' --inclusion=false --organization "$ORG" --repository-ids ${REPOID} --content-view "cv-os-rhel-7Server"
-hammer content-view filter rule create --name 'emacs*' --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'excluding-emacs'
+# due to https://bugzilla.redhat.com/show_bug.cgi?id=1228890 you need to provide 
+# repository ID instead of name otherwise the filter applies to all repos 
+REPOID=$(hammer --csv repository list --name 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' \
+   --organization $ORG | grep -vi '^ID' | awk -F',' '{print $1}')
+
+hammer content-view filter create --type rpm --name 'excluding-emacs' \
+   --description 'Excluding emacs package' --inclusion=false \
+   --organization "$ORG" --repository-ids ${REPOID} \
+   --content-view "cv-os-rhel-7Server"
+
+hammer content-view filter rule create --name 'emacs*' \
+   --organization "$ORG" --content-view "cv-os-rhel-7Server" \
+   --content-view-filter 'excluding-emacs'
 
 # we are creating an initial version just containing RHEL 7.0 bits based on a date filter between RHEL 7.0 GA and before RHEL 7.1 GA
 # TODO currently we can't update or delete the filter without UI since option list does not work. commenting the filter out until it works
@@ -102,14 +145,12 @@ hammer content-view filter rule create --name 'emacs*' --organization "$ORG" --c
 
 
 # add all puppet modules which are part of core build
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name motd --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name ntp --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name corebuildpackages --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name loghost --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name zabbix --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name vmwaretools --organization $ORG
-hammer content-view puppet-module add --content-view cv-os-rhel-7Server --name rhevagent --organization $ORG
-	
+for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 'rhevagent'
+do
+	hammer content-view puppet-module add --name ${module} \
+	   --content-view cv-os-rhel-7Server \
+	   --organization $ORG
+done	
 
 # CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
 hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
@@ -127,9 +168,20 @@ then
 else 
 
 	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build. Promoting it now to DEV, QA and PROD"
-	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment DEV --id $RHEL7_CB_VID
-	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment QA --id $RHEL7_CB_VID
-	hammer content-view version promote --content-view-id $RHEL7_CVID  --organization "$ORG" --to-lifecycle-environment PROD --id $RHEL7_CB_VID 
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment DEV \
+	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment QA \
+	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment PROD \
+	   --id $RHEL7_CB_VID
 fi
 
 # since we need our core build CV IDs more than once let's use variables for them
@@ -137,11 +189,17 @@ fi
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	export RHEL6_CB_VID=`get_latest_version cv-os-rhel-6Server`
-	export RHEL6_CVID=$(hammer --csv content-view list --name cv-os-rhel-6Server --organization ${ORG} | grep -vi '^Content View ID,' | awk -F',' '{print $1}' )
-	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build. Promoting it now to DEV, QA and PROD"
-	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment DEV --id $RHEL6_CB_VID
-	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment QA --id $RHEL6_CB_VID
-	hammer content-view version promote --content-view-id $RHEL6_CVID  --organization "$ORG" --to-lifecycle-environment PROD --id $RHEL6_CB_VID 
+	export RHEL6_CVID=$(hammer --csv content-view list --name cv-os-rhel-6Server \
+	   --organization ${ORG} | grep -vi '^Content View ID,' | awk -F',' '{print $1}' )
+
+	echo "Identified VERSION ID ${RHEL6_CB_VID} as most current version of our RHEL6 Core Build."
+	echo "Promoting it now to DEV, QA and PROD. This might take a while."
+	hammer content-view version promote --content-view-id $RHEL6_CVID  \
+	   --organization "$ORG" --to-lifecycle-environment DEV --id $RHEL6_CB_VID
+	hammer content-view version promote --content-view-id $RHEL6_CVID  \
+	   --organization "$ORG" --to-lifecycle-environment QA --id $RHEL6_CB_VID
+	hammer content-view version promote --content-view-id $RHEL6_CVID  \
+	   --organization "$ORG" --to-lifecycle-environment PROD --id $RHEL6_CB_VID 
 fi
 
 
