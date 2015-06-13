@@ -47,7 +47,6 @@ if [ "$ECHO_COMMANDS" == 1 ]; then
 fi
 
 # this function expects the cv name and returns the most current version id of it
-
 function get_latest_version {
 	# check if $1 is empty and if so throw an exception
 	if [ $# -ne 1 ]
@@ -62,4 +61,3 @@ function get_latest_version {
 	echo $VID
 	return 0
 }
-
