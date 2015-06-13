@@ -70,6 +70,43 @@ hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily syn
 
 ###################################################################################################
 #
+# ACME product and repositories
+#
+###################################################################################################
+hammer product create --name="$ORG" --organization=$ORG
+hammer repository create --name="$ORG RPM Repo" --organization=$ORG --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
+# TODO this does not work as expected. uncomment after fixing 
+hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name "$ORG"
+# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
+# hammer repository synchronize --organization "$ORG" --product "$ORG" --async
+
+
+###################################################################################################
+#
+# EXAMPLE PUPPET MODULES PUSH 
+#
+###################################################################################################
+# we need to push our pre-built puppet modules into git and enable the repo sync
+# TODO double-check if this is the right chapter for this task
+
+# TODO create a local git repo and make it available as sync repo
+# in the meantime let's push the modules inside our example module dir directly
+# push the example puppet module into our $ORG Puppet Repo
+for module in $(ls ./puppet/*/*gz)
+do
+	echo "Pushing example module $module into our puppet repo"
+	hammer -v repository upload-content --organization $ORG --product ACME --name "ACME Puppet Repo" --path $module
+done
+
+# the following lines are the bash work-around for pulp-puppet-module-builder
+#for file in $@
+#do
+#    echo $file,`sha256sum $file | awk '{ print $1 }'`,`stat -c '%s' $file`
+#done
+
+###################################################################################################
+#
 # RED HAT PRODUCTS AND REPOSITORIES
 #
 ###################################################################################################
@@ -94,7 +131,7 @@ then
 	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Linux 6 Server - Extras (RPMs)' 
 	# TODO adapt it to non-beta repo after GA
 	# TODO repo not found error here
-	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
+	hammer repository-set enable --organization $ORG --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
 	hammer repository-set enable --organization $ORG --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
 
 	# if we are using RHEV we need the RHEV agents in the dedicated channel for RHEL6 while RHEL7 includes in RH Common
@@ -273,15 +310,3 @@ then
 	hammer repository create --name='Puppet Forge' --organization=$ORG --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
 fi
 
-###################################################################################################
-#
-# ACME product and repositories
-#
-###################################################################################################
-hammer product create --name="$ORG" --organization=$ORG
-hammer repository create --name="$ORG RPM Repo" --organization=$ORG --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
-# TODO this does not work as expected. uncomment after fixing 
-hammer repository create --name="$ORG Puppet Repo" --organization=$ORG --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name "$ORG"
-# TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
-# hammer repository synchronize --organization "$ORG" --product "$ORG" --async
