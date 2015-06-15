@@ -143,9 +143,22 @@ hammer content-view filter rule create --name 'emacs*' \
 #hammer content-view filter create --type erratum --name 'rhel-7.0-only' --description 'Only include RHEL 7.0 bits' --inclusion=true --organization "$ORG" --repositories 'Red Hat Enterprise Linux 7 Server RPMs x86_64 7Server' --content-view "cv-os-rhel-7Server"
 #hammer content-view filter rule create  --organization "$ORG" --content-view "cv-os-rhel-7Server" --content-view-filter 'rhel-7.0-only' --start-date 2014-06-09 --end-date 2015-03-01 --types enhancement,bugfix,security
 
+# download and push into custom puppet repo the puppetlabs modules we need
+wget -O /tmp/puppetlabs-stdlib-4.6.0.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-stdlib-4.6.0.tar.gz
+
+wget -O /tmp/puppetlabs-concat-1.2.3.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-concat-1.2.3.tar.gz
+
+# add these modules to ACME puppet repo
+hammer repository upload-content --organization “ACME” \
+   --product ACME --name "ACME Puppet Repo" \
+   --path /tmp/puppetlabs-stdlib-4.6.0.tar.gz
+
+hammer repository upload-content --organization “ACME” \
+   --product ACME --name "ACME Puppet Repo" \
+   --path /tmp/puppetlabs-concat-1.2.3.tar.gz
 
 # add all puppet modules which are part of core build
-for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 'rhevagent'
+for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 'rhevagent' 'stdlib' 'concat'
 do
 	hammer content-view puppet-module add --name ${module} \
 	   --content-view cv-os-rhel-7Server \
@@ -167,7 +180,8 @@ then
 	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
 else 
 
-	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build. Promoting it now to DEV, QA and PROD"
+	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build."
+	echo " Promoting it now to DEV, QA and PROD. This will take a while."
 	hammer content-view version promote --organization "$ORG" \
 	   --content-view-id $RHEL7_CVID  \
 	   --to-lifecycle-environment DEV \
