@@ -71,6 +71,21 @@ hammer filter create --permission-ids 19 --role foremanhookrole # permissions cr
 hammer user add-role --login foremanhook --role foremanhookrole
 
 
+###################################################################################################
+#
+# IT Ops Manager (read-only role)
+#
+###################################################################################################
+hammer user create --firstname jim \
+   --lastname opsmgr \
+   --login jimopsmgr \
+   --mail jimopsmgrg@example.com \
+   --password 'redhat' \
+   --auth-source-id="1" \
+   --organizations ${ORG}
+
+# add the predefined Viewer role to this user
+hammer user add-role --login jimopsmgr --role Viewer
 
 ###################################################################################################
 #
