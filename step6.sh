@@ -236,6 +236,52 @@ hammer content-view version promote --organization "$ORG" \
 
 ###################################################################################################
 #
+# CV mariadb (puppet only since mariadb is part of RHEL7 and we don't use RHEL6 here) and according CCV
+# 
+###################################################################################################
+hammer content-view create --name "cv-app-mariadb" \
+   --description "MariaDB Content View" \
+   --organization "$ORG"
+
+# since MariaDB is included in RHEL7 (and therefore in RHEL7 Core Build) we only need to add RHSCL if we use RHEL6
+if [ "$RHEL6_ENABLED" -eq 1 ]
+then
+	hammer content-view add-repository --name "cv-app-mariadb" \
+	   --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' \
+	   --product 'Red Hat Software Collections for RHEL Server' \
+	   --organization "$ORG"
+
+# TODO add required deps and then enable again and documented inside step6
+#	hammer content-view filter create --type rpm --name 'mariadb-packages-only' \
+#	   --description 'Only include the MariaDB rpm packages' --inclusion=true \
+#	   --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' \
+#	   --content-view "cv-app-mariadb" --organization "$ORG" 
+
+#	hammer content-view filter rule create --name mariadb --organization "$ORG" \
+#	   --content-view "cv-app-mariadb" --content-view-filter 'mariadb-packages-only'
+
+fi
+
+# download puppetlabs mysql module and push it to ACME Puppet Repo
+wget -O /tmp/puppetlabs-mysql-3.4.0.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-mysql-3.4.0.tar.gz
+
+# add these modules to ACME puppet repo
+hammer repository upload-content --organization “ACME” \
+   --product ACME --name "ACME Puppet Repo" \
+   --path /tmp/puppetlabs-mysql-3.4.0.tar.gz
+
+hammer content-view puppet-module add --content-view cv-app-mariadb \
+   --name mysql --organization $ORG
+
+hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" 
+
+# Note: we do not create a CCV for MariaDB as we might need for a dedicated DB server yet 
+# We are using this CV just as a profile inside role ccv-biz-acmeweb and ccv-biz-intranet 
+
+
+
+###################################################################################################
+#
 # CV wordpress (contains EPEL7 + Filter)
 # 
 ###################################################################################################
@@ -260,52 +306,21 @@ hammer content-view filter rule create --name wordpress \
    --content-view-filter 'wordpress-packages-only'
    --organization "$ORG"
 
+# download puppetlabs mysql module and push it to ACME Puppet Repo
+wget -O /tmp/puppetlabs-apache-1.4.1.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-apache-1.4.1.tar.gz
+
+# add these modules to ACME puppet repo
+hammer repository upload-content --organization “ACME” \
+   --product ACME --name "ACME Puppet Repo" \
+   --path /tmp/puppetlabs-apache-1.4.1.tar.gz
+
 # add puppet modules from $ORG product repo to this CV
-# profile specific / generic module
-hammer content-view puppet-module add --name wordpress \
-   --content-view "cv-app-wordpress" \
-    --organization $ORG
-# role specific module for acmeweb
+# role specific module for acmeweb (includes wordpress profile)
 hammer content-view puppet-module add --name acmeweb \
    --content-view "cv-app-wordpress" \
    --organization $ORG 
 
 hammer content-view  publish --name "cv-app-wordpress" --organization "$ORG" 
-
-
-###################################################################################################
-#
-# CV mariadb (puppet only since mariadb is part of RHEL7 and we don't use RHEL6 here) and according CCV
-# 
-###################################################################################################
-hammer content-view create --name "cv-app-mariadb" --description "MariaDB Content View" --organization "$ORG"
-
-# since MariaDB is included in RHEL7 (and therefore in RHEL7 Core Build) we only need to add RHSCL if we use RHEL6
-if [ "$RHEL6_ENABLED" -eq 1 ]
-then
-	hammer content-view add-repository --name "cv-app-mariadb" \
-	   --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' \
-	   --product 'Red Hat Software Collections for RHEL Server' \
-	   --organization "$ORG"
-
-	hammer content-view filter create --type rpm --name 'mariadb-packages-only' \
-	   --description 'Only include the MariaDB rpm packages' --inclusion=true \
-	   --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' \
-	   --content-view "cv-app-mariadb" --organization "$ORG" 
-
-	hammer content-view filter rule create --name mariadb --organization "$ORG" \
-	   --content-view "cv-app-mariadb" --content-view-filter 'mariadb-packages-only'
-
-fi
-
-hammer content-view puppet-module add --content-view cv-app-mariadb \
-   --name mariadb --organization $ORG
-
-hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" 
-
-# Note: we do not create a CCV for MariaDB as we might need for a dedicated DB server yet 
-# We are using this CV just as a profile inside role ccv-biz-acmeweb and ccv-biz-intranet 
-
 
 ###################################################################################################
 #
