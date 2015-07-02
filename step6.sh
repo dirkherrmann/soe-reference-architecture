@@ -146,46 +146,6 @@ hammer content-view version promote --organization "$ORG" \
    --to-lifecycle-environment DEV \
    --id $VID --async
 
-###################################################################################################
-#
-# CV (rsys)log host (no software since part of RHEL but just puppet)
-# 
-###################################################################################################
-hammer content-view create --name "cv-app-rsyslog" \
-   --description "Rsyslog Content View" --organization "$ORG"
-
-# Note: we do not add software repositories in this CV since rsyslog 
-# is part of both RHEL6 and RHEL7
-# Note: the only puppet module we need is the loghost module which 
-# contains server and client specific classes similar to git module.
-# Since it is already part of the core build content view we MUST NOT
-# add it here other we can create this CV but not the CCV of both CVs.
-
-# publish it without using async since we need to wait 
-# until the task is finished before promoting it
-hammer content-view  publish --name "cv-app-rsyslog" --organization "$ORG" 
-
-###################################################################################################
-#
-# CCV INFRA LOGHOST (RHEL7 Core Build + RSYSLOG CV)
-# 
-###################################################################################################
-
-# create the CCV using the RHEL7 core build
-APP_CVID=`get_latest_version cv-app-rsyslog`
-hammer content-view create --name "ccv-infra-loghost" \
-   --composite --description "CCV for central log host" \
-   --organization $ORG \
-   --component-ids ${RHEL7_CB_VID},${APP_CVID}
-
-hammer content-view publish --name "ccv-infra-loghost" --organization "$ORG" 
-
-
-VID=`get_latest_version ccv-infra-loghost`
-hammer content-view version promote --organization "$ORG" \
-   --content-view "ccv-infra-loghost" \
-   --to-lifecycle-environment DEV \
-   --id $VID --async
 
 ###################################################################################################
 #
