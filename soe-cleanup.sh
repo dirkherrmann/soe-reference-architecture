@@ -4,7 +4,7 @@
 
 
 # check if exists and if yes source the config file 
-if -f ~/.soe-config;
+if [ -f ~/.soe-config ];
 then
 	source ~/.soe-config
 else
@@ -16,7 +16,7 @@ fi
 # TODO this script can create a lot of damage. we have to ask if the user really wants to destroy the current organization with all its elements
 
 # remove content views
-for i in $(hammer --csv content-view list --full-results 1 --organization $ORG |  grep -e "^[0-9]*,.*" | awk -F, {'print $1'} )
+for i in $(hammer --csv content-view list --full-results 1 --organization "$ORG" |  grep -e "^[0-9]*,.*" | awk -F, {'print $1'} )
 do 
 	echo "Deleting content view ID $i";
 	# TOOD does not work, we need to remove from all envs before
