@@ -36,7 +36,7 @@ source $CONFIGFILE
 mkdir  -p $HOME/.hammer  
 cat > $HOME/.hammer/cli_config.yml <<EOF 
 :foreman:  
- :host: $SATELLITE_SERVER
+ :host: https://$SATELLITE_SERVER
  :username: $SATELLITE_USER
  :password: $SATELLITE_PASSWORD  
  :organization: $ORG
