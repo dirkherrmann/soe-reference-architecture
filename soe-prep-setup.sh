@@ -21,7 +21,6 @@ fi
 
 # basically all long-duration tasks are now executed during step 1 and step 3
 DIR="$PWD"
-###sh "${DIR}/step1.sh" && sh "${DIR}/step3.sh"
-sh "${DIR}/step3.sh"
+sh "${DIR}/step1.sh" && sh "${DIR}/step3.sh"
 
 
