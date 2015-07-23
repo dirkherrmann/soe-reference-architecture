@@ -52,14 +52,16 @@ hammer content-view add-repository --organization "$ORG" \
    --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' \
    --product 'Red Hat Software Collections for RHEL Server'
 
+RHSCLREPOID=`get_repository_id 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server'`
 hammer content-view filter create --type rpm --name 'git-packages-only' \
-   --description 'Only include the git rpm packages' --inclusion=true \
-   --repositories 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' \
+   --description 'Only include the git rpm packages' \
+   --repository-ids ${RHSCLREPOID} \
+   --inclusion true \
    --content-view "cv-app-git" --organization "$ORG" 
 
 hammer content-view filter rule create --name 'git19-*' \
    --content-view "cv-app-git" \
-   --content-view-filter 'git-packages-only'
+   --content-view-filter 'git-packages-only' \
    --organization "$ORG" 
 
 # add puppet modules from $ORG product repo to this CV
@@ -85,10 +87,13 @@ hammer content-view create --name "ccv-infra-gitserver" \
 hammer content-view publish --name "ccv-infra-gitserver" --organization "$ORG" 
 
 VID=`get_latest_version ccv-infra-gitserver`
-hammer content-view version promote --organization "$ORG" \
-   --content-view "ccv-infra-gitserver" \
-   --to-lifecycle-environment DEV \
-   --id $VID --async
+for ENV in DEV QA PROD
+do
+  hammer content-view version promote --organization "$ORG" \
+     --content-view "ccv-infra-gitserver" \
+     --to-lifecycle-environment ${ENV} \
+     --id $VID
+done
 
 ###################################################################################################
 #
@@ -103,10 +108,11 @@ hammer content-view add-repository --organization "$ORG" \
    --repository 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' \
    --name "cv-app-docker" --product 'Red Hat Enterprise Linux Server'
 
+RHEXTRASREPOID=`get_repository_id 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server'`
 hammer content-view filter create --type rpm --name 'docker-package-only' \
    --description 'Only include the docker rpm package' --inclusion=true \
    --organization "$ORG" --content-view "cv-app-docker" \
-   --repositories 'Red Hat Enterprise Linux 7 Server - Extras RPMs x86_64 7Server' 
+   --repository-ids ${RHEXTRASREPOID} 
 
 hammer content-view filter rule create --name 'docker*' \
    --organization "$ORG" --content-view "cv-app-docker" \
@@ -141,11 +147,13 @@ hammer content-view publish --name "ccv-infra-containerhost" \
    --organization "$ORG" 
 
 VID=`get_latest_version ccv-infra-containerhost`
-hammer content-view version promote --organization "$ORG" \
-   --content-view "ccv-infra-containerhost" \
-   --to-lifecycle-environment DEV \
-   --id $VID --async
-
+for ENV in DEV QA PROD
+do
+  hammer content-view version promote --organization "$ORG" \
+     --content-view "ccv-infra-containerhost" \
+     --to-lifecycle-environment ${ENV} \
+     --id $VID
+done
 
 ###################################################################################################
 #
@@ -164,7 +172,7 @@ echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. "
 echo -e "POST GA please change this inside step6.sh to the final repository.\n\n\n"
 
 hammer content-view add-repository --organization "$ORG" \
-   --repository 'Red Hat Satellite Capsule 6 Beta for RHEL 7 Server RPMs x86_64' \
+   --repository 'Red Hat Satellite Capsule 6 Beta for RHEL 7 Server RPMs x86_64 7Server' \
    --name "cv-app-capsule" --product 'Red Hat Satellite Capsule Beta'
 
 # POST GA PLEASE COMMENT OUT THE 1 LINE ABOVE AND UNCOMMENT THE 1 LINE BELOW
@@ -187,11 +195,13 @@ hammer content-view publish --name "ccv-infra-capsule" \
    --organization "$ORG" 
 
 VID=`get_latest_version ccv-infra-capsule`
-hammer content-view version promote --organization "$ORG" \
-   --content-view "ccv-infra-capsule" \
-   --to-lifecycle-environment DEV \
-   --id $VID --async 
-
+for ENV in DEV QA PROD
+do
+  hammer content-view version promote --organization "$ORG" \
+     --content-view "ccv-infra-capsule" \
+     --to-lifecycle-environment ${ENV} \
+     --id $VID 
+done
 
 
 ###################################################################################################
@@ -207,7 +217,7 @@ hammer content-view create --name "cv-app-mariadb" \
 if [ "$RHEL6_ENABLED" -eq 1 ]
 then
 	hammer content-view add-repository --name "cv-app-mariadb" \
-	   --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 7Server' \
+	   --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server x86_64 6Server' \
 	   --product 'Red Hat Software Collections for RHEL Server' \
 	   --organization "$ORG"
 
@@ -226,12 +236,12 @@ fi
 wget -O /tmp/puppetlabs-mysql-3.4.0.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-mysql-3.4.0.tar.gz
 
 # add these modules to ACME puppet repo
-hammer repository upload-content --organization “ACME” \
+hammer repository upload-content --organization ${ORG} \
    --product ACME --name "ACME Puppet Repo" \
    --path /tmp/puppetlabs-mysql-3.4.0.tar.gz
 
 hammer content-view puppet-module add --content-view cv-app-mariadb \
-   --name mysql --organization $ORG
+   --name mysql --organization ${ORG}
 
 hammer content-view  publish --name "cv-app-mariadb" --organization "$ORG" 
 
@@ -254,23 +264,24 @@ hammer content-view add-repository --name "cv-app-wordpress" \
    --repository 'EPEL7-APP-x86_64' --product 'EPEL7-APP' \
    --organization "$ORG"
 
+EPELREPOID=`get_repository_id 'EPEL7-APP-x86_64'`
 hammer content-view filter create --type rpm \
    --name 'wordpress-packages-only' \
    --description 'Only include the wordpress rpm package' \
    --inclusion=true --organization "$ORG" \
-   --repositories 'EPEL7-APP-x86_64' \
+   --repository-ids ${EPELREPOID} \
    --content-view "cv-app-wordpress"
 
 hammer content-view filter rule create --name wordpress \
    --content-view "cv-app-wordpress" \
-   --content-view-filter 'wordpress-packages-only'
+   --content-view-filter 'wordpress-packages-only' \
    --organization "$ORG"
 
 # download puppetlabs mysql module and push it to ACME Puppet Repo
 wget -O /tmp/puppetlabs-apache-1.4.1.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-apache-1.4.1.tar.gz
 
 # add these modules to ACME puppet repo
-hammer repository upload-content --organization “ACME” \
+hammer repository upload-content --organization ${ORG} \
    --product ACME --name "ACME Puppet Repo" \
    --path /tmp/puppetlabs-apache-1.4.1.tar.gz
 
@@ -297,11 +308,13 @@ hammer content-view create --name "ccv-biz-acmeweb" --composite \
 hammer content-view publish --name "ccv-biz-acmeweb" --organization "$ORG" 
 
 VID=`get_latest_version ccv-biz-acmeweb`
-hammer content-view version promote --organization "$ORG" \
-   --content-view "ccv-biz-acmeweb" \
-   --to-lifecycle-environment Web-DEV \
-   --id $VID --async 
-
+for ENV in Web-DEV Web-QA Web-UAT Web-PROD
+do
+  hammer content-view version promote --organization "$ORG" \
+     --content-view "ccv-biz-acmeweb" \
+     --to-lifecycle-environment ${ENV} \
+     --id $VID
+done
 
 
 ###################################################################################################

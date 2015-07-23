@@ -37,7 +37,7 @@ then
 	# there is an inconsistency here between RHEL7 and RHEL6: RHEL6 repo name without 6Server at the end 
 	hammer content-view add-repository --organization "$ORG" \
 	   --name "cv-os-rhel-6Server" \
-	   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 6 Server RPMs x86_64' \
+	   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 6 Server RPMs x86_64 6Server' \
 	   --product 'Red Hat Enterprise Linux Server'
 
 	hammer content-view add-repository --organization "$ORG" \
@@ -77,7 +77,7 @@ then
 	for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 'rhevagent'
 	do
 		hammer content-view puppet-module add --name ${module} \
-		   --content-view cv-os-rhel-7Server \
+		   --content-view cv-os-rhel-6Server \
 		   --organization $ORG
 	done
 
@@ -108,10 +108,11 @@ hammer content-view add-repository --organization "$ORG" \
    --repository 'Red Hat Satellite Tools 6 Beta for RHEL 7 Server RPMs x86_64 7Server' \
    --product 'Red Hat Enterprise Linux Server'
 
-hammer content-view add-repository --organization "$ORG" \
-   --name "cv-os-rhel-7Server" \
-   --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' \
-   --product 'Red Hat Enterprise Linux Server'
+#Using Satellite Beta Tools Repository now
+#hammer content-view add-repository --organization "$ORG" \
+#   --name "cv-os-rhel-7Server" \
+#   --repository 'Red Hat Enterprise Linux 7 Server - RH Common RPMs x86_64 7Server' \
+#   --product 'Red Hat Enterprise Linux Server'
 
 hammer content-view add-repository --organization "$ORG" \
    --name "cv-os-rhel-7Server" \
@@ -149,11 +150,11 @@ wget -O /tmp/puppetlabs-stdlib-4.6.0.tar.gz https://forgeapi.puppetlabs.com/v3/f
 wget -O /tmp/puppetlabs-concat-1.2.3.tar.gz https://forgeapi.puppetlabs.com/v3/files/puppetlabs-concat-1.2.3.tar.gz
 
 # add these modules to ACME puppet repo
-hammer repository upload-content --organization “ACME” \
+hammer repository upload-content --organization "${ORG}" \
    --product ACME --name "ACME Puppet Repo" \
    --path /tmp/puppetlabs-stdlib-4.6.0.tar.gz
 
-hammer repository upload-content --organization “ACME” \
+hammer repository upload-content --organization "${ORG}" \
    --product ACME --name "ACME Puppet Repo" \
    --path /tmp/puppetlabs-concat-1.2.3.tar.gz
 
@@ -162,7 +163,7 @@ for module in 'motd' 'ntp' 'corebuildpackages' 'loghost' 'zabbix' 'vmwaretools' 
 do
 	hammer content-view puppet-module add --name ${module} \
 	   --content-view cv-os-rhel-7Server \
-	   --organization $ORG
+	   --organization "$ORG"
 done	
 
 # CV publish without --async option to ensure that the CV is published before we create CCVs in the next step

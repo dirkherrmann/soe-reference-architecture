@@ -61,3 +61,17 @@ function get_latest_version {
 	echo $VID
 	return 0
 }
+
+#this function returns the repository ID of a repositie name
+function get_repository_id {
+	if [ $# -ne 1 ]
+	then
+		echo 'Error: func get_repository_id expects ONE and only ONE param.'
+		return 1
+	fi
+	
+	REPOID=$(hammer --output csv repository list --library yes --organization ${ORG} --per-page "999" | awk -F"," "(\$2 ~ /^$1$/) {print \$1}" )
+	echo $REPOID
+	return 0
+}
+
