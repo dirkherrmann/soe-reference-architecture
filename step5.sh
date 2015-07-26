@@ -197,6 +197,26 @@ else
 	   --content-view-id $RHEL7_CVID  \
 	   --to-lifecycle-environment PROD \
 	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment Web-DEV \
+	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment Web-QA \
+	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment Web-UAT \
+	   --id $RHEL7_CB_VID
+
+	hammer content-view version promote --organization "$ORG" \
+	   --content-view-id $RHEL7_CVID  \
+	   --to-lifecycle-environment Web-PROD \
+	   --id $RHEL7_CB_VID
 fi
 
 # since we need our core build CV IDs more than once let's use variables for them
