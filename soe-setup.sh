@@ -8,7 +8,7 @@
 
 
 # check if exists and if yes source the config file 
-if -f ~/.soe-config;
+if [ -f ~/.soe-config ];
 then
 	source ~/.soe-config
 else
