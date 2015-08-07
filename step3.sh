@@ -112,14 +112,35 @@ done
 ###################################################################################################
 
 # RHEL7 repos
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7.1' --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'  
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server (RPMs)'  
-#hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' 
-# TODO adapt it to non-beta repo after GA
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 7 Server) (RPMs)'
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Enterprise Linux Server' \
+   --basearch='x86_64' --releasever='7.1' \
+   --name 'Red Hat Enterprise Linux 7 Server (Kickstart)'  
+
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Enterprise Linux Server' \
+   --basearch='x86_64' --releasever='7Server' \
+   --name 'Red Hat Enterprise Linux 7 Server (RPMs)' 
+
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Enterprise Linux Server' \
+   --basearch='x86_64' --releasever='7Server' \
+   --name 'Red Hat Enterprise Linux 7 Server - RH Common (RPMs)'  
+
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Enterprise Linux Server' \
+   --basearch='x86_64' --releasever='7Server' \
+   --name 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' 
+
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Enterprise Linux Server' \
+   --basearch='x86_64' --releasever='7Server' \
+   --name 'Red Hat Satellite Tools 6 Beta (for RHEL 7 Server) (RPMs)'
 # TODO after I've enabled and tried to sync the products have been messed up and could not be accessed anymore via UI and hammer
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='7Server' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server'
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Software Collections for RHEL Server' \
+   --basearch='x86_64' --releasever='7Server' \
+   --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server'
 
 # RHEL6 repos only if RHEL6_ENABLED param is set to 1 in config file
 if [ "$RHEL6_ENABLED" -eq 1 ]
@@ -134,7 +155,8 @@ then
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
 
-	# if we are using RHEV we need the RHEV agents in the dedicated channel for RHEL6 while RHEL7 includes in RH Common
+	# if we are using RHEV we need the RHEV agents in the dedicated channel for RHEL6 
+	# while RHEL7 packages are included in RH Common
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Virtualization Agents for RHEL 6 Server (RPMs)'
 
 #	# RHEL 6 latest
@@ -150,12 +172,20 @@ then
 fi
 
 # sync all RHEL packages
-hammer product synchronize --organization "$ORG" --name  'Red Hat Enterprise Linux Server' --async
-hammer product synchronize --organization "$ORG" --name  'Red Hat Software Collections for RHEL Server' --async
+hammer product synchronize \
+   --name  'Red Hat Enterprise Linux Server' \
+   --organization "$ORG" --async
+hammer product synchronize \
+    --name  'Red Hat Software Collections for RHEL Server' \
+   --organization "$ORG" --async
 
 # set sync plan
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'Red Hat Enterprise Linux Server' 
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'Red Hat Software Collections for RHEL Server'
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' \
+   --name  'Red Hat Enterprise Linux Server' \
+   --organization "$ORG"
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' \
+   --name  'Red Hat Software Collections for RHEL Server' \
+   --organization "$ORG" 
 
 # JBoss Enterprise Application Platform - DISABLED TEMPORARY SINCE WE DO NOT USE IT HERE
 #hammer repository-set enable --organization "$ORG" --product 'JBoss Enterprise Application Platform' --basearch='x86_64' --releasever='7Server' --name 'JBoss Enterprise Application Platform 6.4 (RHEL 7 Server) (RPMs)'
@@ -310,3 +340,16 @@ then
 	hammer repository create --name='Puppet Forge' --organization="$ORG" --product='Forge' --content-type='puppet' --publish-via-http=true --url=https://forge.puppetlabs.com
 fi
 
+
+###################################################################################################
+#
+# add all products to the sync plan
+#
+###################################################################################################
+# Note: this snippet is used inside the doc while inside this script we've added each product individually
+
+## get all products which have been synced (ignore not_synced)
+#for i in $(hammer --csv product list --organization $ORG --per-page 999 | grep -vi '^ID' | grep -vi not_synced  | awk -F, {'print $2'}) 
+#do
+#   hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization $ORG --name  $i
+#done
