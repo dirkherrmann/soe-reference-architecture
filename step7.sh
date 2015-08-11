@@ -23,9 +23,9 @@ hammer global-parameter set --name "selinux" --value "--permissive"
 #create $ORG Kickstart Default template
 hammer template dump --name "Satellite Kickstart Default" > "/tmp/tmp.skd"
 
-sed -i 's/lang.*/lang <%= @host.params[‘language’] %>/' /tmp/tmp.skd
-sed -i 's/selinux.*/selinux <%= @host.params[‘selinux’] %>/' /tmp/tmp.skd
-sed -i 's/firewall.*/firewall firewall <%= @host.params[‘firewall’] %>/' /tmp/tmp.skd
+sed -i "s/lang.*/lang <%= @host.params['language'] %>/" /tmp/tmp.skd
+sed -i "s/selinux.*/selinux <%= @host.params['selinux'] %>/" /tmp/tmp.skd
+sed -i "s/firewall.*/firewall firewall <%= @host.params['firewall'] %>/" /tmp/tmp.skd
 
 hammer template create \
      --file /tmp/tmp.skd \
@@ -173,7 +173,7 @@ hammer location add-organization --name "${LOCATION3}" --organization "${ORG}"
   do
     hammer host-collection create --name $(echo ${LC_ENV} | tr '[[:lower:]' '[[:upper:]]') --organization "${ORG}"
   done
- 
+
 #CREATE ACTIVATION KEYS
  #rhel-7server
   TYPE="os"
@@ -465,7 +465,7 @@ hammer location add-organization --name "${LOCATION3}" --organization "${ORG}"
   SubRHEL=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^Red Hat Enterprise Linux with Smart Virtualization/) {print \$8}")
   SubZabbix=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^Zabbix-Monitoring$/) {print \$8}")
   SubACME=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^ACME$/) {print \$8}")
-  SubEPEL7-APP=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^EPEL7-APP$/) {print \$8}")
+  SubEPEL7APP=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^EPEL7-APP$/) {print \$8}")
   for LC_ENV in ${LC_ENVS}
   do
       LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
@@ -477,7 +477,7 @@ hammer location add-organization --name "${LOCATION3}" --organization "${ORG}"
             --lifecycle-environment "${LC_ENV}" \
             --organization "${ORG}"
 
-      SubIDs="${SubRHEL} ${SubZabbix} ${SubACME} ${SubEPEL7-APP}"
+      SubIDs="${SubRHEL} ${SubZabbix} ${SubACME} ${SubEPEL7APP}"
       for SubID in ${SubIDs}
       do
         hammer activation-key add-subscription \
@@ -514,7 +514,7 @@ hammer location add-organization --name "${LOCATION3}" --organization "${ORG}"
     SubRHEL=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^Red Hat Enterprise Linux with Smart Virtualization/) {print \$8}")
     SubZabbix=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^Zabbix-Monitoring$/) {print \$8}")
     SubACME=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^ACME$/) {print \$8}")
-    SubEPEL7-APP=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^EPEL7-APP$/) {print \$8}")
+    SubEPEL7APP=$(hammer --csv --csv-separator '#' subscription list --per-page 9999 --organization ${ORG} | awk -F"#" "(\$1 ~ /^EPEL7-APP$/) {print \$8}")
     for LC_ENV in ${LC_ENVS}
     do
         LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
@@ -526,7 +526,7 @@ hammer location add-organization --name "${LOCATION3}" --organization "${ORG}"
               --lifecycle-environment "${LC_ENV}" \
               --organization "${ORG}"
 
-        SubIDs="${SubRHEL} ${SubZabbix} ${SubACME} ${SubEPEL7-APP}"
+        SubIDs="${SubRHEL} ${SubZabbix} ${SubACME} ${SubEPEL7APP}"
         for SubID in ${SubIDs}
         do
           hammer activation-key add-subscription \
@@ -595,7 +595,7 @@ DOMAIN="${DOMAIN1}"
       --content-view "cv-os-rhel-${MAJOR}Server" \
       --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_cv_os_rhel_${MAJOR}Server/ {print \$1}")
 
-    HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}/) {print \$1}")
+    HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
     hammer hostgroup set-parameter \
       --hostgroup-id "${HgID}" \
       --name "kt_activation_keys" \
@@ -628,7 +628,7 @@ do
     --content-view "cv-os-rhel-${MAJOR}Server" \
     --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_cv_os_rhel_${MAJOR}Server/ {print \$1}")
 
-  HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}/) {print \$1}")
+  HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
   hammer hostgroup set-parameter \
     --hostgroup-id "${HgID}" \
     --name "kt_activation_keys" \
@@ -667,7 +667,7 @@ LOCATIONS="${LOCATION1},${LOCATION2}"
   for LC_ENV in DEV QA PROD
   do
   LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
-    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
+    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra$/) {print \$1}")
     hammer hostgroup create --name "gitserver" \
       --parent-id ${ParentID} \
       --organizations "${ORG}" \
@@ -675,8 +675,8 @@ LOCATIONS="${LOCATION1},${LOCATION2}"
       --content-view "ccv-infra-gitserver" \
       --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_ccv_infra_gitserver/ {print \$1}") \
       --puppet-classes 'git::server'
-  
-     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/gitserver$/) {print \$1}")
+
+     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra\/gitserver$/) {print \$1}")
      hammer hostgroup set-parameter \
        --hostgroup-id "${HgID}" \
        --name "kt_activation_keys" \
@@ -690,7 +690,7 @@ LOCATIONS="${LOCATION1},${LOCATION2}"
  for LC_ENV in DEV QA PROD
  do
    LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
-   ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
+   ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra$/) {print \$1}")
    hammer hostgroup create --name "containerhost" \
      --parent-id ${ParentID} \
      --organizations "${ORG}" \
@@ -698,8 +698,8 @@ LOCATIONS="${LOCATION1},${LOCATION2}"
      --content-view "ccv-infra-containerhost" \
      --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_ccv_infra_containerhost/ {print \$1}") \
      --puppet-classes 'docker'
- 
-    HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/containerhost$/) {print \$1}")
+
+    HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra\/containerhost$/) {print \$1}")
     hammer hostgroup set-parameter \
       --hostgroup-id "${HgID}" \
       --name "kt_activation_keys" \
@@ -712,15 +712,15 @@ LOCATIONS="${LOCATION1}"
   for LC_ENV in DEV QA PROD
   do
     LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
-    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
+    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra$/) {print \$1}")
     hammer hostgroup create --name "capsule" \
       --parent-id ${ParentID} \
       --organizations "${ORG}" \
       --locations "${LOCATIONS}" \
       --content-view "ccv-infra-capsule" \
-      --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_ccv_infra_capsule/ {print \$1}") 
-  
-     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/capsule$/) {print \$1}")
+      --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_ccv_infra_capsule/ {print \$1}")
+
+     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra\/capsule$/) {print \$1}")
      hammer hostgroup set-parameter \
        --hostgroup-id "${HgID}" \
        --name "kt_activation_keys" \
@@ -733,15 +733,15 @@ LOCATIONS="${LOCATION1},${LOCATION2}"
   for LC_ENV in DEV QA PROD
   do
     LC_ENV_LOWER=$(echo ${LC_ENV} | tr '[[:upper:]' '[[:lower:]]')
-    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}$/) {print \$1}")
+    ParentID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra$/) {print \$1}")
     hammer hostgroup create --name "loghost" \
       --parent-id ${ParentID} \
       --organizations "${ORG}" \
       --locations "${LOCATIONS}" \
       --content-view "cv-os-rhel-6Server" \
       --environment-id $(hammer --output csv environment list --per-page 999 | awk -F "," "/KT_${ORG}_${LC_ENV}_cv_os_rhel_${MAJOR}Server/ {print \$1}")
-  
-     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/loghost$/) {print \$1}")
+
+     HgID=$(hammer --output csv hostgroup list --per-page 999 | awk -F"," "(\$3 ~ /^${LC_ENV_LOWER}\/rhel-${MAJOR}server-${ARCH}\/infra\/loghost$/) {print \$1}")
      hammer hostgroup set-parameter \
        --hostgroup-id "${HgID}" \
        --name "kt_activation_keys" \
@@ -804,3 +804,4 @@ LOCATIONS="${LOCATION1},${LOCATION2},${LOCATION3}"
         --name "kt_activation_keys" \
         --value "act-${LC_ENV_LOWER}-biz-acmeweb-x86_64"
   done
+
