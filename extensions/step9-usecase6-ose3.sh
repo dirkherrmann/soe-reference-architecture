@@ -7,6 +7,10 @@
 # - 10 Steps to Build an SOE Solution Guide: https://access.redhat.com/articles/1585273 (Step 9)
 # - OpenShift Enterprise
 #
+#
+# The full text documentation to this script could be found here:
+# 
+#
 # TODO GSS Support Disclaimer
 #
 ################################################################################################################
@@ -103,19 +107,21 @@ hammer repository synchronize --organization "$ORG" \
 # Note: in our setup neither Extras nor Optional are part of the Core Build CV.
 # For further details see Step 5: Define your Core Build in the doc "10 Steps to Build an SOE"
 
+# currently there is only one module, TODO check if we need more than this one
 
 # TODO import our Puppet modules from Github
-for module in 'ose3-prereq' 'ose3-node' 'ose3-master'
+for module in 'ose3prerequisites' # 'ose3-node' 'ose3-master'
 do
 	# download the module from Github
-	wget -O /tmp/${module}.tar.gz https://github.com/v3/files/${module}.tar.gz
+	# TODO decide how we want to deal with the version of the module, also provider (RHsyseng)
+	wget -O /tmp/${module}.tar.gz https://forgeapi.puppetlabs.com/v3/files/RHsyseng-${module}-0.1.5.tar.gz
 
 	# push the module to Satellite 6
 	hammer repository upload-content --organization "${ORG}" \
 	   --product ACME --name "ACME Puppet Repo" \
 	   --path /tmp/${module}.tar.gz
 
-	# add the module to the content view
+	# add the module to the content view (Note: has to be the module not file name)
 	hammer content-view puppet-module add --name ${module} \
 	   --content-view cv-app-ose3 \
 	   --organization "$ORG"
@@ -152,6 +158,12 @@ done
 # OpenShift Enterprise 3 nodes require a second disk to store container images
 # Therefore we create a new partition table with a second based on a clone of the existing one.
 
-# TODO
+# TODO partition table
 
 # TODO foreman hook to create the inventory file
+
+# TODO host groups (hierarchy)
+
+# TODO activation keys
+
+# TODO sample command to provision a new host (node)
