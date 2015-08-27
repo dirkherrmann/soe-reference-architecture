@@ -13,6 +13,11 @@
 #
 # TODO GSS Support Disclaimer
 #
+
+
+DIR="$PWD"
+source "${DIR}/common.sh"
+
 ################################################################################################################
 #
 # CONFIGURATION SECTION
@@ -32,6 +37,8 @@ export RHEL_RELEASE="7Server"
 ################################################################################################################
 # STEP 1
 ################################################################################################################
+
+# TODO check if we can use the license manager role from Step 8 here
 
 # check if subscription manifest contains OSE3 subscriptions
 if $(hammer subscription list --organization "$ORG" | cut -d'|' -f1 | grep -q "OpenShift Enterprise Broker Infrastructure"); 
@@ -100,6 +107,52 @@ hammer repository synchronize --organization "$ORG" \
    --product 'Red Hat Enterprise Linux Server'
 
 
+# Container Image Import to Satellite 6 
+# taken from Summit Lab script
+# create a container product
+hammer product create --name='Container Images' --organization="$ORG"
+# create image repo for RHEL
+hammer repository create --name='rhel-base' \
+   --product='Container Images' --content-type='docker' \
+   --url='https://registry.access.redhat.com' \
+   --docker-upstream-name='rhel' \
+   --publish-via-http="true" \
+   --organization="$ORG"
+
+# TODO stopped here
+# TESTED ABOVE, MONGODB BELOW DOES NOT WORK.
+exit 1
+
+
+# create image repo for RHEL
+hammer repository create --name='rh-mongodb' \
+   --product='Container Images' --content-type='docker' \
+   --url='https://registry.access.redhat.com' \
+   --docker-upstream-name='mongodb' \
+   --publish-via-http="true" \
+   --organization="$ORG"
+
+
+#hammer repository create --name='wordpress' --organization="$ORG" --product='containers' --content-type='docker' --url='https://registry.hub.docker.com' --docker-upstream-name='wordpress' --publish-via-http="true"
+#hammer repository create --name='mysql' --organization="$ORG" --product='containers' --content-type='docker' --url='https://registry.hub.docker.com' --docker-upstream-name='mysql' --publish-via-http="true"
+
+# Sync the images
+hammer product synchronize --name "Container Images" \
+   --organization "$ORG"
+
+hammer content-view create --name "cv-con-webshop" \
+   --description "CV of type container images for ACME Webshop" \
+   --organization "$ORG"
+
+hammer content-view add-repository --name "cv-con-webshop" \
+   --repository "rhel" --product "Container Images" \
+   --organization "$ORG"
+
+#hammer content-view add-repository --organization "$ORG" --name "registry" --repository "mysql" --product "containers"
+#hammer content-view add-repository --organization "$ORG" --name "registry" --repository "wordpress" --product "containers"
+
+hammer content-view publish --organization "$ORG" --name "cv-con-webshop" 
+
 ################################################################################################################
 # STEP 6
 ################################################################################################################
@@ -127,8 +180,20 @@ do
 	   --organization "$ORG"
 done
 
+# TODO check if we can use the app owner role from Step 8 here or introduce a new one
+
 # assemble together with existing Core Build content view created during step 5
 # Note: this requires common.sh script if you running this script standalone
+# get the lastest version of our RHEL7 core build and exit if unsuccessful
+export RHEL7_CB_VID=`get_latest_version cv-os-rhel-7Server`
+if [ -z ${RHEL7_CB_VID} ]
+then 
+	echo "Could not identify latest CV version id of RHEL 7 Core Build. Exit."; exit; 
+else 
+
+	echo "Identified VERSION ID ${RHEL7_CB_VID} as most current version of our RHEL7 Core Build"
+fi
+
 APP_CVID=`get_latest_version cv-app-ose3`
 hammer content-view create --name "ccv-infra-ose3" \
    --composite --description "CCV for OpenShift Enterprise 3" \
@@ -167,3 +232,13 @@ done
 # TODO activation keys
 
 # TODO sample command to provision a new host (node)
+
+
+################################################################################################################
+# STEP 8
+################################################################################################################
+
+# we introduce new role here: 
+# 	oseadmin who manages the OSE3 infrastructure
+#	appadmin who manages the container images supposed to run on top of OpenShift
+# we create 4 users associated to 2 groups associated to these 2 roles
