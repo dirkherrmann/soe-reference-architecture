@@ -65,8 +65,12 @@ hammer gpg create --name 'GPG-ZABBIX' --organization "$ORG" --key /tmp/ZABBIX.ke
 ###################################################################################################
 
 # create sync plan for daily sync
-hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily sync plans runs every morning a 3 a.m.' --enabled=true --interval daily --organization "$ORG" --sync-date '2015-04-15 03:00:00'
-
+hammer sync-plan create --name 'daily sync at 3 a.m.' \
+   --description 'A daily sync plans runs every morning a 3 a.m.' \
+   --enabled=true \
+   --interval daily \
+   --organization "$ORG" \
+   --sync-date '2015-04-15 03:00:00'
 
 ###################################################################################################
 #
@@ -74,10 +78,20 @@ hammer sync-plan create --name 'daily sync at 3 a.m.' --description 'A daily syn
 #
 ###################################################################################################
 hammer product create --name="$ORG" --organization="$ORG"
-hammer repository create --name="$ORG RPM Repo" --organization="$ORG" --product="$ORG" --content-type='yum' --publish-via-http=true --url="$CUSTOM_YUM_REPO"
-# TODO this does not work as expected. uncomment after fixing 
-hammer repository create --name="$ORG Puppet Repo" --organization="$ORG" --product="$ORG" --content-type='puppet' --publish-via-http=true --url="$CUSTOM_PUPPET_REPO"
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name "$ORG"
+hammer repository create --name="$ORG RPM Repo" \
+   --organization="$ORG" --product="$ORG" \
+   --content-type='yum' --publish-via-http=true \
+   --url="$CUSTOM_YUM_REPO"
+
+hammer repository create --name="$ORG Puppet Repo" \
+   --organization="$ORG" --product="$ORG" \
+   --content-type='puppet' --publish-via-http=true \
+   --url="$CUSTOM_PUPPET_REPO"
+
+hammer product set-sync-plan --name "$ORG" \
+   --sync-plan 'daily sync at 3 a.m.' \
+   --organization "$ORG"
+
 # TODO de-comment the following line if we provide example rpm packages. otherwise the sync will fail so we might want to skip it
 # hammer repository synchronize --organization "$ORG" --product "$ORG" --async
 
@@ -151,6 +165,7 @@ then
 	#hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Linux 6 Server - RH Common (RPMs)'  
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Enterprise Linux 6 Server - Extras (RPMs)' 
 	# TODO adapt it to non-beta repo after GA
+	# hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --name 'Red Hat Satellite Tools 6.1 (for RHEL 6 Server) (RPMs)'
 	# TODO repo not found error here
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
