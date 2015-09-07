@@ -286,6 +286,10 @@ hammer repository upload-content --organization ${ORG} \
    --path /tmp/puppetlabs-apache-1.4.1.tar.gz
 
 # add puppet modules from $ORG product repo to this CV
+hammer content-view puppet-module add --name apache \
+   --content-view "cv-app-wordpress" \
+   --organization $ORG 
+
 # role specific module for acmeweb (includes wordpress profile)
 hammer content-view puppet-module add --name acmeweb \
    --content-view "cv-app-wordpress" \
