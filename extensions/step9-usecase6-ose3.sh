@@ -24,7 +24,7 @@ source "${DIR}/common.sh"
 #
 ################################################################################################################
 # Satellite 6 server
-# Satellite 6 User
+# Satellite 6 admin User
 # Satellite 6 Password
 # Satellite 6 Organization
 export ORG="ACME"
@@ -33,6 +33,30 @@ export ORG="ACME"
 # the following option must be either set to "7Server" or to a particular minor release, e.g. "7.1"
 export RHEL_RELEASE="7Server"
 
+# Christoph defines the list of all container images we need
+# Link: https://github.com/RHsyseng/OSE3-Sat6-RefImpl/blob/master/list_of_docker_images.asciidoc
+export CONTAINER_IMAGES="
+registry.access.redhat.com/rhel7.1
+registry.access.redhat.com/rhel
+registry.access.redhat.com/openshift3/ose-docker-registry
+registry.access.redhat.com/openshift3/ose-pod
+registry.access.redhat.com/openshift3/ose-sti-builder
+registry.access.redhat.com/openshift3/ose-docker-builder
+registry.access.redhat.com/openshift3/ose-deployer
+registry.access.redhat.com/openshift3/mongodb-24-rhel7
+registry.access.redhat.com/openshift3/mysql-55-rhel7
+registry.access.redhat.com/openshift3/postgresql-92-rhel7
+registry.access.redhat.com/jboss-eap-6/eap-openshift
+registry.access.redhat.com/jboss-amq-6/amq-openshift
+registry.access.redhat.com/jboss-webserver-3/tomcat7-openshift
+registry.access.redhat.com/jboss-webserver-3/tomcat8-openshif
+registry.access.redhat.com/openshift3/python-33-rhel7
+registry.access.redhat.com/openshift3/nodejs-010-rhel7
+registry.access.redhat.com/openshift3/ruby-20-rhel7
+registry.access.redhat.com/openshift3/perl-516-rhel7
+registry.access.redhat.com/openshift3/php-55-rhel7
+registry.hub.docker.com/openshift/jenkins-1-centos7
+"
 
 ################################################################################################################
 # STEP 1
@@ -50,12 +74,17 @@ else
 	exit 1
 fi
 
+# assuming that the subscription manifest has been updated in the Red Hat customer portal
+# we use the license manager role created during step 8 of the SOE solution guide
+# TODO check if the role exist
+hammer -u licensemgr -p 'xD6ZuhJ8' subscription  refresh-manifest --organization ACME
+
 
 ################################################################################################################
 # STEP 3
 ################################################################################################################
 
-# check if the repository already exist and enable and sync if not
+# OpenShift 3 RPM repository: check if the repository already exist and enable and sync if not
 if $(hammer --output csv repository list --organization "$ORG" --per-page 500 | cut -d',' -f2 | grep -q 'Red Hat OpenShift Enterprise 3.0 RPMs'); 
 then 
 	echo "The OpenShift Enterprise RPM Repository is already there. Skipping enabling it."; 
@@ -110,48 +139,75 @@ hammer repository synchronize --organization "$ORG" \
 # Container Image Import to Satellite 6 
 # taken from Summit Lab script
 # create a container product
-hammer product create --name='Container Images' --organization="$ORG"
-# create image repo for RHEL
-hammer repository create --name='rhel-base' \
-   --product='Container Images' --content-type='docker' \
-   --url='https://registry.access.redhat.com' \
-   --docker-upstream-name='rhel' \
-   --publish-via-http="true" \
+hammer product create --name='Container Images' \
    --organization="$ORG"
 
-# TODO stopped here
-# TESTED ABOVE, MONGODB BELOW DOES NOT WORK.
-exit 1
+## single repo manual approach, substituted by for loop below
+## create image repo for RHEL
+#hammer repository create --name='rhel-base' \
+#   --product='Container Images' --content-type='docker' \
+#   --url='https://registry.access.redhat.com' \
+#   --docker-upstream-name='rhel' \
+#   --publish-via-http="true" \
+#   --organization="$ORG"
 
 
-# create image repo for RHEL
-hammer repository create --name='rh-mongodb' \
-   --product='Container Images' --content-type='docker' \
-   --url='https://registry.access.redhat.com' \
-   --docker-upstream-name='mongodb' \
-   --publish-via-http="true" \
-   --organization="$ORG"
 
+# TODO registry.access.redhat.com/openshift3/mongodb-24-rhel7:latest
+# <goern> registry.access.redhat.com/jboss-eap-6/eap-openshift:6.4 
+# since we have a long list of images we need we are using a loop
+for image in $CONTAINER_IMAGES
+do
+	# divide between registry and upstream repo name
+	REGISTRY_URL=$(echo $image | cut -d'/' -f1)
+	REPO_NAME=$(echo $image | cut -d'/' -f2-)
+	echo "Adding REPO: $REPO_NAME REGISTRY: $REGISTRY_URL "
 
-#hammer repository create --name='wordpress' --organization="$ORG" --product='containers' --content-type='docker' --url='https://registry.hub.docker.com' --docker-upstream-name='wordpress' --publish-via-http="true"
-#hammer repository create --name='mysql' --organization="$ORG" --product='containers' --content-type='docker' --url='https://registry.hub.docker.com' --docker-upstream-name='mysql' --publish-via-http="true"
+	hammer repository create --name="${REPO_NAME}" \
+ 	  --product='Container Images' --content-type='docker' \
+ 	  --url="https://${REGISTRY_URL}" \
+ 	  --docker-upstream-name="${REPO_NAME}" \
+ 	  --publish-via-http="true" \
+	  --organization="$ORG"
+done
+
+# create image repo for Tomcat7
+#hammer repository create --name='openshift3/postgresql-92-rhel7' \
+#   --product='Container Images' --content-type='docker' \
+#   --url='https://registry.access.redhat.com' \
+#   --docker-upstream-name='openshift3/postgresql-92-rhel7' \
+#   --publish-via-http="true" \
+#   --organization="$ORG"
+
+#hammer repository create --name='rh-tomcat7-openshift' \
+#   --product='Container Images' --content-type='docker' \
+#   --url='https://registry.access.redhat.com' \
+#   --docker-upstream-name='jboss-webserver-3/tomcat7-openshift' \
+#   --publish-via-http="true" \
+#   --organization="$ORG"
+
 
 # Sync the images
 hammer product synchronize --name "Container Images" \
    --organization "$ORG"
+
+# add the container images product to our sync plan created in Step 3
+hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' \
+   --name 'Container Images' --organization "$ORG" 
 
 hammer content-view create --name "cv-con-webshop" \
    --description "CV of type container images for ACME Webshop" \
    --organization "$ORG"
 
 hammer content-view add-repository --name "cv-con-webshop" \
-   --repository "rhel" --product "Container Images" \
+   --repository "rhel-base" --product "Container Images" \
    --organization "$ORG"
 
 #hammer content-view add-repository --organization "$ORG" --name "registry" --repository "mysql" --product "containers"
 #hammer content-view add-repository --organization "$ORG" --name "registry" --repository "wordpress" --product "containers"
 
-hammer content-view publish --organization "$ORG" --name "cv-con-webshop" 
+hammer content-view publish --name "cv-con-webshop" \
+   --organization "$ORG"
 
 ################################################################################################################
 # STEP 6
@@ -242,3 +298,21 @@ done
 # 	oseadmin who manages the OSE3 infrastructure
 #	appadmin who manages the container images supposed to run on top of OpenShift
 # we create 4 users associated to 2 groups associated to these 2 roles
+
+
+# oseadmin supposed to manage content inside a synched registry
+# but not allowed to edit or change a registry -> #166 view_registries DockerRegistry
+hammer user create --firstname itops \
+   --lastname platformops1 \
+   --login itopsplatformops1 \
+   --mail root@localhost.localdomain \
+   --password 'redhat' \
+   --auth-source-id='1'  \
+   --organizations ${ORG}
+
+hammer role create --name itops-platform-ops
+hammer user add-role --login itopsplatformops1 --role itops-platform-ops
+
+# view_hosts
+hammer filter create --permission-ids 74 --role itops-platform-ops
+#  
