@@ -61,7 +61,7 @@ echo logvol swap --fstype swap --name=lv_swap --vgname=vg_sys --size=2048 >> /tm
 echo logvol /home --fstype <%= fstype %> --name=lv_home --vgname=vg_sys --size=2048 --fsoptions="noatime,usrquota,grpquota" >> /tmp/diskpart.cfg
 echo logvol /tmp --fstype <%= fstype %> --name=lv_tmp --vgname=vg_sys --size=1024 --fsoptions="noatime" >> /tmp/diskpart.cfg
 echo logvol /usr --fstype <%= fstype %> --name=lv_usr --vgname=vg_sys --size=2048 --fsoptions="noatime">> /tmp/diskpart.cfg
-echo logvol /var --fstype<%= fstype %> --name=lv_var --vgname=vg_sys --size=2048 --fsoptions="noatime" >> /tmp/diskpart.cfg
+echo logvol /var --fstype <%= fstype %> --name=lv_var --vgname=vg_sys --size=2048 --fsoptions="noatime" >> /tmp/diskpart.cfg
 echo logvol /var/log/ --fstype <%= fstype %> --name=lv_log --vgname=vg_sys --size=2048 --fsoptions="noatime" >> /tmp/diskpart.cfg
 echo logvol /var/log/audit --fstype <%= fstype %> --name=lv_audit --vgname=vg_sys --size=256 --fsoptions="noatime" >> /tmp/diskpart.cfg'
 EOC
