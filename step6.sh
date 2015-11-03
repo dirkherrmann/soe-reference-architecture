@@ -168,12 +168,9 @@ hammer content-view add-repository --organization "$ORG" \
    --repository 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 7 Server x86_64 7Server' \
    --name "cv-app-capsule" --product 'Red Hat Software Collections for RHEL Server'
 
-echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. "
-echo -e "POST GA please change this inside step6.sh to the final repository.\n\n\n"
-
 hammer content-view add-repository --organization "$ORG" \
-   --repository 'Red Hat Satellite Capsule 6 Beta for RHEL 7 Server RPMs x86_64 7Server' \
-   --name "cv-app-capsule" --product 'Red Hat Satellite Capsule Beta'
+   --repository 'Red Hat Satellite Capsule 6.1 for RHEL 7 Server RPMs x86_64' \
+   --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'
 
 # POST GA PLEASE COMMENT OUT THE 1 LINE ABOVE AND UNCOMMENT THE 1 LINE BELOW
 #hammer content-view add-repository --organization "$ORG" --repository 'Red Hat Satellite Capsule 6.1 for RHEL 7 Server RPMs x86_64 7Server' --name "cv-app-capsule" --product 'Red Hat Satellite Capsule'

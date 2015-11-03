@@ -37,7 +37,7 @@ then
 	# there is an inconsistency here between RHEL7 and RHEL6: RHEL6 repo name without 6Server at the end 
 	hammer content-view add-repository --organization "$ORG" \
 	   --name "cv-os-rhel-6Server" \
-	   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 6 Server RPMs x86_64 6Server' \
+	   --repository 'Red Hat Satellite Tools 6.1 for RHEL 6 Server RPMs x86_64' \
 	   --product 'Red Hat Enterprise Linux Server'
 
 	hammer content-view add-repository --organization "$ORG" \
@@ -105,7 +105,7 @@ hammer content-view add-repository --organization "$ORG" \
 
 hammer content-view add-repository --organization "$ORG" \
    --name "cv-os-rhel-7Server" \
-   --repository 'Red Hat Satellite Tools 6 Beta for RHEL 7 Server RPMs x86_64 7Server' \
+   --repository 'Red Hat Satellite Tools 6.1 for RHEL 7 Server RPMs x86_64' \
    --product 'Red Hat Enterprise Linux Server'
 
 #Using Satellite Beta Tools Repository now
@@ -166,8 +166,11 @@ do
 	   --organization "$ORG"
 done	
 
-# CV publish without --async option to ensure that the CV is published before we create CCVs in the next step
-hammer content-view  publish --name "cv-os-rhel-7Server" --organization "$ORG" #--async
+# CV publish without --async option to ensure that the
+# CV is published before we create CCVs in the next step
+hammer content-view  publish --organization "$ORG" \
+   --name "cv-os-rhel-7Server" 
+
 
 # TODO now create a new version of cv including all erratas until today (removing the date filter created earlier)
 

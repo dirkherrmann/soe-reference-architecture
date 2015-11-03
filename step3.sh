@@ -146,10 +146,11 @@ hammer repository-set enable --organization "$ORG" \
    --basearch='x86_64' --releasever='7Server' \
    --name 'Red Hat Enterprise Linux 7 Server - Extras (RPMs)' 
 
-hammer repository-set enable --organization "$ORG" \
+hammer repository-set enable --organization "$ORG"  \
    --product 'Red Hat Enterprise Linux Server' \
-   --basearch='x86_64' --releasever='7Server' \
-   --name 'Red Hat Satellite Tools 6 Beta (for RHEL 7 Server) (RPMs)'
+   --basearch='x86_64' \
+   --name  'Red Hat Satellite Tools 6.1 (for RHEL 7 Server) (RPMs)'
+
 # TODO after I've enabled and tried to sync the products have been messed up and could not be accessed anymore via UI and hammer
 hammer repository-set enable --organization "$ORG" \
    --product 'Red Hat Software Collections for RHEL Server' \
@@ -167,7 +168,13 @@ then
 	# TODO adapt it to non-beta repo after GA
 	# hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --name 'Red Hat Satellite Tools 6.1 (for RHEL 6 Server) (RPMs)'
 	# TODO repo not found error here
-	hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
+	#hammer repository-set enable --organization "$ORG" --product 'Red Hat Enterprise Linux Server' --basearch='x86_64' --releasever='6Server' --name 'Red Hat Satellite Tools 6 Beta (for RHEL 6 Server) (RPMs)'
+	# new: post GA
+	hammer repository-set enable --organization "$ORG"  \
+	   --product 'Red Hat Enterprise Linux Server' \
+	   --basearch='x86_64' \
+	   --name  'Red Hat Satellite Tools 6.1 (for RHEL 6 Server) (RPMs)'
+
 	hammer repository-set enable --organization "$ORG" --product 'Red Hat Software Collections for RHEL Server' --basearch='x86_64' --releasever='6.5' --name 'Red Hat Software Collections RPMs for Red Hat Enterprise Linux 6 Server'
 
 	# if we are using RHEV we need the RHEV agents in the dedicated channel for RHEL6 
@@ -208,18 +215,16 @@ hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' \
 #hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'JBoss Enterprise Application Platform'
 
 # Satellite 6.1 Capsule
+hammer repository-set enable --organization "$ORG" \
+   --product 'Red Hat Satellite Capsule'  \
+   --basearch='x86_64' \
+   --name 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)'
+hammer product synchronize --organization "$ORG" \
+   --name  'Red Hat Satellite Capsule' --async
+hammer product set-sync-plan --organization "$ORG" \
+   --name  'Red Hat Satellite Capsule' \
+   --sync-plan 'daily sync at 3 a.m.' 
 
-# this is the Satellite 6.1 pre-GA (Beta)repo
-echo -e "\n\n\nWe enable the Satellite 6 Capsule Repo for ****BETA**** here. POST GA please change this inside step3.sh to the final repository.\n\n\n"
-hammer repository-set enable --organization "$ORG" --product 'Red Hat Satellite Capsule Beta'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6 Beta (for RHEL 7 Server) (RPMs)'
-hammer product synchronize --organization "$ORG" --name  'Red Hat Satellite Capsule Beta' --async
-hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'Red Hat Satellite Capsule Beta'
-
-# TODO this repo is empty as of today, we need to use the beta repo instead. check after GA if we now have content inside
-# POST GA PLEASE COMMENT OUT THE 3 LINES ABOVE AND UNCOMMENT THE 3 LINES BELOW
-#hammer repository-set enable --organization "$ORG" --product 'Red Hat Satellite Capsule'  --basearch='x86_64' --releasever='7Server' --name 'Red Hat Satellite Capsule 6.1 (for RHEL 7 Server) (RPMs)'
-#hammer product synchronize --organization "$ORG" --name  'Red Hat Satellite Capsule' --async
-#hammer product set-sync-plan --sync-plan 'daily sync at 3 a.m.' --organization "$ORG" --name  'Red Hat Satellite Capsule'
 
 # TODO additional repos 2 sync as defined in CONFIG section
 
